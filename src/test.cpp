@@ -5,4 +5,5 @@ int main(){
 	MPU9150 sensor = MPU9150(1);
 	int result;
 	result = sensor.initialize();
+	return result;
 }

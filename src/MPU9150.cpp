@@ -14,6 +14,7 @@
 #include "MPU9150.h"
 #include <cstdlib>
 #include <cstdint>
+#include <cinttypes>
 using namespace std;
 
 // defines
@@ -48,36 +49,35 @@ int MPU9150::initialize(){
 	int result;
 	// Wake up MPU9150: write 0x00 to MPU9150_PWR_MGMT_1
 	// configure x-axis gyroscope as clock source
-	if(result = writeByte(mpuFile, MPU9150_PWR_MGMT_1, 0x00 | (1 << 0))){
+	if((result = writeByte(mpuFile, MPU9150_PWR_MGMT_1, 0x00 | (1 << 0)))){
 		return result;
 	}
 	
 	// Check device identity
 	uint8_t deviceID;
-	if(result = readByte(mpuFile, MPU9150_WHO_AM_I, *deviceID)){
+	if((result = readByte(mpuFile, MPU9150_WHO_AM_I, &deviceID))){
 		return result;
 	}
 	
 	if(deviceID != 0x68){
 		// Failed to confirm device
 		cout << "Failed to confirm device identity!" << endl;
-		cout << "Device identity: 0x" << hex << i2cbuf[0] << dec << endl 
-				<< endl;
+		printf("Device identity: 0x%" PRIu8 "\n\n", deviceID);
 		return 5;
 	}
 	
 	// configure device
 	// set gyro to +/- 250 deg/sec
-	if(result = writeBits(mpuFile, MPU9150_GYRO_CONFIG, ~(0x03 << 3), 0x18)){
+	if((result = writeBits(mpuFile, MPU9150_GYRO_CONFIG, ~(0x03 << 3), 0x18))){
 		return result;
 	}
 	// set accel to +/- 2g
-	if(result = writeBits(mpuFile, MPU9150_ACCEL_CONFIG, ~(0x03 << 3), 0x18)){
+	if((result = writeBits(mpuFile, MPU9150_ACCEL_CONFIG, ~(0x03 << 3), 0x18))){
 		return result;
 	}
 	
 	// Enable magnetometer
-	if(result = writeByte(mpuFile, MPU9150_I2C_INT_PIN_CFG, (1 << 1))){
+	if((result = writeByte(mpuFile, MPU9150_I2C_INT_PIN_CFG, (1 << 1)))){
 		return result;
 	}
 	
@@ -94,19 +94,18 @@ int MPU9150::initialize(){
 	}
 	
 	// Configure magnetometer
-	if(result = writeByte(magFile, MPU9150_MAG_CNTL, (1 << 0))){
+	if((result = writeByte(magFile, MPU9150_MAG_CNTL, (1 << 0)))){
 		return result;
 	}
 	
 	// verify magnetometer
-	if(result = readByte(magFile, MPU9150_MAG_WIA, *deviceID)){
+	if((result = readByte(magFile, MPU9150_MAG_WIA, &deviceID))){
 		return result;
 	}
 	if(deviceID != 0x48){
 		// Failed to confirm device
 		cout << "Failed to confirm device identity!" << endl;
-		cout << "Device identity: 0x" << hex << i2cbuf[0] << dec << endl 
-				<< endl;
+		printf("Device identity: 0x%" PRIu8 "\n\n", deviceID);
 		return 5;
 	}
 	return 0;
@@ -136,89 +135,89 @@ MPU9150::MPU9150(int bus, int address){
 int MPU9150::getSensorState(){
 	uint8_t buffer;
 	int result;
-	if(result = readByte(mpuFile, MPU9150_ACCEL_XOUT_H, *buffer)){
+	if((result = readByte(mpuFile, MPU9150_ACCEL_XOUT_H, &buffer))){
 		return result;
 	}
 	accel_X = buffer << 8;
-	if(result = readByte(mpuFile, MPU9150_ACCEL_XOUT_L, *buffer)){
+	if((result = readByte(mpuFile, MPU9150_ACCEL_XOUT_L, &buffer))){
 		return result;
 	}
 	accel_X |= buffer;
-	if(result = readByte(mpuFile, MPU9150_ACCEL_YOUT_H, *buffer)){
+	if((result = readByte(mpuFile, MPU9150_ACCEL_YOUT_H, &buffer))){
 		return result;
 	}
 	accel_Y = buffer << 8;
-	if(result = readByte(mpuFile, MPU9150_ACCEL_YOUT_L, *buffer)){
+	if((result = readByte(mpuFile, MPU9150_ACCEL_YOUT_L, &buffer))){
 		return result;
 	}
 	accel_Y |= buffer;
-	if(result = readByte(mpuFile, MPU9150_ACCEL_ZOUT_H, *buffer)){
+	if((result = readByte(mpuFile, MPU9150_ACCEL_ZOUT_H, &buffer))){
 		return result;
 	}
 	accel_Z = buffer << 8;
-	if(result = readByte(mpuFile, MPU9150_ACCEL_ZOUT_L, *buffer)){
+	if((result = readByte(mpuFile, MPU9150_ACCEL_ZOUT_L, &buffer))){
 		return result;
 	}
 	accel_Z |= buffer;
 	
-	if(result = readByte(mpuFile, MPU9150_TEMP_OUT_H, *buffer)){
+	if((result = readByte(mpuFile, MPU9150_TEMP_OUT_H, &buffer))){
 		return result;
 	}
 	temp = buffer << 8;
-	if(result = readByte(mpuFile, MPU9150_TEMP_OUT_L, *buffer)){
+	if((result = readByte(mpuFile, MPU9150_TEMP_OUT_L, &buffer))){
 		return result;
 	}
 	temp |= buffer;
 	
-	if(result = readByte(mpuFile, MPU9150_GYRO_XOUT_H, *buffer)){
+	if((result = readByte(mpuFile, MPU9150_GYRO_XOUT_H, &buffer))){
 		return result;
 	}
-	gyroX = buffer << 8;
-	if(result = readByte(mpuFile, MPU9150_GYRO_XOUT_L, *buffer)){
+	gyro_X = buffer << 8;
+	if((result = readByte(mpuFile, MPU9150_GYRO_XOUT_L, &buffer))){
 		return result;
 	}
-	gyroX |= buffer;
-	if(result = readByte(mpuFile, MPU9150_GYRO_YOUT_H, *buffer)){
+	gyro_X |= buffer;
+	if((result = readByte(mpuFile, MPU9150_GYRO_YOUT_H, &buffer))){
 		return result;
 	}
-	gyroY = buffer << 8;
-	if(result = readByte(mpuFile, MPU9150_GYRO_YOUT_L, *buffer)){
+	gyro_Y = buffer << 8;
+	if((result = readByte(mpuFile, MPU9150_GYRO_YOUT_L, &buffer))){
 		return result;
 	}
-	gyroY |= buffer;
-	if(result = readByte(mpuFile, MPU9150_GYRO_ZOUT_H, *buffer)){
+	gyro_Y |= buffer;
+	if((result = readByte(mpuFile, MPU9150_GYRO_ZOUT_H, &buffer))){
 		return result;
 	}
-	gyroZ = buffer << 8;
-	if(result = readByte(mpuFile, MPU9150_GYRO_ZOUT_L, *buffer)){
+	gyro_Z = buffer << 8;
+	if((result = readByte(mpuFile, MPU9150_GYRO_ZOUT_L, &buffer))){
 		return result;
 	}
-	gyroZ |= buffer;
+	gyro_Z |= buffer;
 	
-	if(result = readByte(magFile, MPU9150_MAG_HXH, *buffer)){
+	if((result = readByte(magFile, MPU9150_MAG_HXH, &buffer))){
 		return result;
 	}
-	magX = buffer << 8;
-	if(result = readByte(magFile, MPU9150_MAG_HXL, *buffer)){
+	mag_X = buffer << 8;
+	if((result = readByte(magFile, MPU9150_MAG_HXL, &buffer))){
 		return result;
 	}
-	magX |= buffer;
-	if(result = readByte(magFile, MPU9150_MAG_HYH, *buffer)){
+	mag_X |= buffer;
+	if((result = readByte(magFile, MPU9150_MAG_HYH, &buffer))){
 		return result;
 	}
-	magY = buffer << 8;
-	if(result = readByte(magFile, MPU9150_MAG_HYL, *buffer)){
+	mag_Y = buffer << 8;
+	if((result = readByte(magFile, MPU9150_MAG_HYL, &buffer))){
 		return result;
 	}
-	magY |= buffer;
-	if(result = readByte(magFile, MPU9150_MAG_HZH, *buffer)){
+	mag_Y |= buffer;
+	if((result = readByte(magFile, MPU9150_MAG_HZH, &buffer))){
 		return result;
 	}
-	magZ = buffer << 8;
-	if(result = readByte(magFile, MPU9150_MAG_HZL, *buffer)){
+	mag_Z = buffer << 8;
+	if((result = readByte(magFile, MPU9150_MAG_HZL, &buffer))){
 		return result;
 	}
-	magZ |= buffer;
+	mag_Z |= buffer;
 	return 0;
 }
 
@@ -254,7 +253,7 @@ int MPU9150::writeBits(int device, uint8_t regAddr, uint8_t value,
 		cout << strerror(errno) << endl << endl;
 		return 4;
 	}
-	i2cbuf[1] = i2cbuf[0] & ~bitmask | value;
+	i2cbuf[1] = (i2cbuf[0] & ~bitmask) | value;
 	i2cbuf[0] = regAddr;
 	if(write(device, i2cbuf, 2) != 2){
 		// Failed transaction
@@ -265,8 +264,8 @@ int MPU9150::writeBits(int device, uint8_t regAddr, uint8_t value,
 	return 0;
 }
 
-int MPU9150::readByte(int device, uint8_t regAddr, uint8_t* value);
-	if(write(device, regAddr, 1) != 1){
+int MPU9150::readByte(int device, uint8_t regAddr, uint8_t* value){
+	if(write(device, (const void*)regAddr, 1) != 1){
 		printf("Failed to write 0x%" PRIu8 " to 0x%" PRIu8 " on /dev/i2c-%" PRIu8 "\n", regAddr, (device === mpuFile) ? I2CAddress : MPU9150_MAG_ADDR, I2CBus);
 		cout << strerror(errno) << endl << endl;
 		return 3;
