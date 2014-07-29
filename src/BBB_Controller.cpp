@@ -22,6 +22,12 @@
  * * Lay out structure
  * * NOTE: Eventually will have to find a library to provide the proper
  * * * non-blocking behavior for the CLI.
+ *
+ * 7/29/14
+ * * Added main CLI interface
+ * * Added quaternion math support
+ * * Added stabilize state feature
+ * * Note: will now use 0MQ to implement separate process control for hardware
  */
  
 
@@ -44,6 +50,7 @@
 using namespace std;
 
 // Variables
+uint8_t stabilize = true;
 Quaternion <float> setPoint;
 Quaternion <float> ROLL_BUMP = Quaternion <float> (R_FIVE_DEG, I_FIVE_DEG, 0, 0);
 Quaternion <float> PITCH_BUMP = Quaternion <float> (R_FIVE_DEG, 0, I_FIVE_DEG, 0);
@@ -111,9 +118,11 @@ int main(int argc, char** argv){
 			cin >> cmd;
 			if(!cmd.compare("on")){	// compare next token to "on"
 				// activate stabilize
+				stabilize = true;
 				cout << "Stabilization Active...\n";
 			}else if(!cmd.compare("off")){	// compare next token to "off"
 				// deactivate stabilize
+				stabilize = false;
 				cout << "Stabilization Inactive\n";
 			}else{
 				cout << "Improper usage!" << NEWLINE;
