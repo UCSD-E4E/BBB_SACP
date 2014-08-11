@@ -28,13 +28,13 @@
  * * Added quaternion math support
  * * Added stabilize state feature
  * * Note: will now use 0MQ to implement separate process control for hardware
+ * * Added display setpoint feature
  */
  
 
 // Defines
 #define VERSION 	0.0
 #define MAX_BUF 	256
-#define NEWLINE		"\n"
 #define R_FIVE_DEG	0.9990482216 // real part of five degree rotation quaternion
 #define I_FIVE_DEG	0.0436193874 // imaginary part of five degree rotation quaternion
 #define R_ONE_DEG	0.9999619231 // real part of one degree rotation quaternion
@@ -51,6 +51,7 @@ using namespace std;
 
 // Variables
 uint8_t stabilize = true;
+uint8_t displayAngle = false;
 Quaternion <float> setPoint;
 Quaternion <float> ROLL_BUMP = Quaternion <float> (R_FIVE_DEG, I_FIVE_DEG, 0, 0);
 Quaternion <float> PITCH_BUMP = Quaternion <float> (R_FIVE_DEG, 0, I_FIVE_DEG, 0);
@@ -62,13 +63,14 @@ void printQuaternion(Quaternion <float> q);
 
 int main(int argc, char** argv){
 	cout << "Project Spectre BeagleBone Black\n";
-	cout << "Version: " << VERSION << NEWLINE;
+	cout << "Version: " << VERSION << endl;
 	
-	cout << NEWLINE << "Initializing..." << NEWLINE;
+	cout << NEWLINE << "Initializing..." << endl;
 
 	setPoint = Quaternion <float> (1, 0, 0, 0);
+	// fork and exec hardware controller
 
-	cout << "Initialized" << NEWLINE;
+	cout << "Initialized" << endl;
 	
 	std::string cmd("");
 	uint8_t runState = true;
@@ -80,7 +82,7 @@ int main(int argc, char** argv){
 		// Process commands
 		if(!cmd.compare("exit")){// Compare to "exit"
 			goodCmd = true;
-			cout << "Exiting..." << NEWLINE;
+			cout << "Exiting..." << endl;
 			runState = false;
 		}
 		if(!cmd.compare("w")){	// compare to "w"
@@ -125,7 +127,7 @@ int main(int argc, char** argv){
 				stabilize = false;
 				cout << "Stabilization Inactive\n";
 			}else{
-				cout << "Improper usage!" << NEWLINE;
+				cout << "Improper usage!" << endl;
 				printHelp();
 			}
 		}
@@ -143,7 +145,7 @@ int main(int argc, char** argv){
 				ROLL_BUMP = Quaternion <float> (R_ONE_DEG, I_ONE_DEG, 0, 0);
 				PITCH_BUMP = Quaternion <float> (R_ONE_DEG, 0, I_ONE_DEG, 0);
 			}else{
-				cout << "Improper usage!" << NEWLINE;
+				cout << "Improper usage!" << endl;
 				printHelp();
 			}
 		}
@@ -162,9 +164,24 @@ int main(int argc, char** argv){
 			goodCmd = true;
 			printQuaternion(setPoint);
 		}
+		if(!cmd.compare("displayAngle")){	// compare to "displayAngle"
+			goodCmd = true;
+			cin >> cmd;
+			if(!cmd.compare("on")){
+				displayAngle = true;
+			}else if(!cmd.compare("off")){
+				displayAngle = false;
+			}else{
+				cout << "Improper usage!" << endl;
+				printHelp();
+			}
+		}
 		if(!goodCmd){
-			cout << "Improper usage!" << NEWLINE;
+			cout << "Improper usage!" << endl;
 			printHelp();
+		}
+		if(displayAngle){
+			printQuaternion(setPoint);
 		}
 		// Get IMU State
 		// Calculate error
@@ -195,6 +212,7 @@ void printHelp(){
 	cout << "                            Fine bump is 1 degree.\n";
 	cout << "    getAngle                Prints out the current setpoint in both quaternion\n";
 	cout << "                            and Euler angle form\n";
+	cout << "    displayAngle [on|off]   Turns on/off angle display for each command\n";
 	return;
 }
 
@@ -223,5 +241,5 @@ void printQuaternion(Quaternion <float> q){
 	printf("%.3f", eulerAngles[1]);
 	cout << ", ";
 	printf("%.3f", eulerAngles[2]);
-	cout << ")" << NEWLINE;
+	cout << ")" << endl;
 }
