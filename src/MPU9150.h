@@ -93,6 +93,27 @@
 #define MPU9150_FIFO_COUNTL			0x73
 #define MPU9150_FIFO_R_W			0x74
 #define MPU9150_WHO_AM_I			0x75
+#define MPU9150_MAG_WIA				0x00
+#define MPU9150_MAG_INFO			0x01
+#define MPU9150_MAG_ST1				0x02
+#define MPU9150_MAG_HXL				0x03
+#define MPU9150_MAG_HXH				0x04
+#define MPU9150_MAG_HYL				0x05
+#define MPU9150_MAG_HYH				0x06
+#define MPU9150_MAG_HZL				0x07
+#define MPU9150_MAG_HZH				0x08
+#define MPU9150_MAG_ST2				0x09
+#define MPU9150_MAG_CNTL			0x0A
+#define MPU9150_MAG_RSV				0x0B
+#define MPU9150_MAG_ASTC			0x0C
+#define MPU9150_MAG_TS1				0x0D
+#define MPU9150_MAG_TS2				0x0E
+#define MPU9150_MAG_I2CDIS			0x0F
+#define MPU9150_MAG_ASAX			0x10
+#define MPU9150_MAG_ASAY			0x11
+#define MPU9150_MAG_ASAZ			0x12
+
+#define MPU9150_MAG_ADDR			0x0C
 
 class MPU9150{
 	private:
