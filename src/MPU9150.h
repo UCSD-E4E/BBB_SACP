@@ -141,7 +141,7 @@ class MPU9150{
 		 * Update function.  Records full sensor state.
 		 */
 		int getSensorState();
-}
+};
 
 
 

@@ -8,6 +8,9 @@
 #include <iostream>
 #include <sys/ioctl.h>
 #include <iomanip>
+#include <cstring>
+#include <fcntl.h>
+#include <linux/i2c-dev.h>
 #include "MPU9150.h"
 using namespace std;
 
@@ -48,8 +51,8 @@ int MPU9150::initialize(){
 	i2cbuf[0] = MPU9150_WHO_AM_I;	// read from MPU9150_WHO_AM_I
 	if(write(file, i2cbuf, 1) != 1){	// attempt to push read register address
 		// Failed transaction
-		cout << "Failed to write read register address to I2C device!" << endl;
-		cout << g_strerror(errno) << endl << endl;
+		cout << "Failed to write MPU9150_WHO_AM_I to I2C device!" << endl;
+		cout << strerror(errno) << endl << endl;
 		return (3);
 	}
 	
@@ -57,7 +60,7 @@ int MPU9150::initialize(){
 	if(read(file, i2cbuf, 1) != 1){	// attempt to pull read register
 		// Failed transaction
 		cout << "Failed to read register contents from I2C device!" <<  endl;
-		cout << g_strerror(errno) << endl << endl;
+		cout << strerror(errno) << endl << endl;
 		return (4);
 	}
 	
@@ -78,19 +81,19 @@ int MPU9150::initialize(){
 		cout << "Failed to write 0x" << hex << i2cbuf[1] << dec << " to 0x"
 				<< hex << i2cbuf[0] << dec << " at 0x" << hex << I2CAddress
 				<< dec << " on " << I2CBus << endl;
-		cout << g_strerror(errno) << endl << endl;
+		cout << strerror(errno) << endl << endl;
 		return 3;
 	}
 	
 	// Enable magnetometer
-	i2cbuf[0] = MPU9150_INT_PIN_CFG;
+	i2cbuf[0] = MPU9150_I2C_INT_PIN_CFG;
 	i2cbuf[1] = (1 << 1);	// enable I2C bypass
 	if(write(file, i2cbuf, 2) != 1){	// attempt to write data
 		// Failed transaction
 		cout << "Failed to write 0x" << hex << i2cbuf[1] << dec << " to 0x"
 				<< hex << i2cbuf[0] << dec << " at 0x" << hex << I2CAddress
 				<< dec << " on " << I2CBus << endl;
-		cout << g_strerror(errno) << endl << endl;
+		cout << strerror(errno) << endl << endl;
 		return 3;
 	}
 	
@@ -113,7 +116,7 @@ int MPU9150::initialize(){
 		cout << "Failed to write 0x" << hex << i2cbuf[1] << dec << " to 0x"
 				<< hex << i2cbuf[0] << dec << " at 0x" << hex << MPU9150_MAG_ADDR
 				<< dec << " on " << I2CBus << endl;
-		cout << g_strerror(errno) << endl << endl;
+		cout << strerror(errno) << endl << endl;
 		return 3;
 	}
 	
@@ -121,8 +124,8 @@ int MPU9150::initialize(){
 	i2cbuf[0] = MPU9150_MAG_WIA;
 	if(write(magFile, i2cbuf, 1) !=1){	// attempt to write read register addr
 		// Failed transaction
-		cout << "Failed to write read register address to I2C device!" << endl;
-		cout << g_strerror(errno) << endl << endl;
+		cout << "Failed to write read register address to I2C magnetometer!" << endl;
+		cout << strerror(errno) << endl << endl;
 		return (3);
 	}
 	
@@ -130,7 +133,7 @@ int MPU9150::initialize(){
 	if(read(magFile, i2cbuf, 1) != 1){	// attempt to pull read register
 		// Failed transaction
 		cout << "Failed to read register contents from I2C device!" <<  endl;
-		cout << g_strerror(errno) << endl << endl;
+		cout << strerror(errno) << endl << endl;
 		return (4);
 	}
 	

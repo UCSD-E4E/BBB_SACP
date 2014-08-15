@@ -65,7 +65,7 @@ int main(int argc, char** argv){
 	cout << "Project Spectre BeagleBone Black\n";
 	cout << "Version: " << VERSION << endl;
 	
-	cout << NEWLINE << "Initializing..." << endl;
+	cout << endl << "Initializing..." << endl;
 
 	setPoint = Quaternion <float> (1, 0, 0, 0);
 	// fork and exec hardware controller

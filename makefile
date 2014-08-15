@@ -1,5 +1,6 @@
 all:
-	g++ ./src/BBB_Controller.cpp -o ./build/BBB_Controller -std=c++11
+	test -d build || mkdir build
+	g++ ./src/BBB_Controller.cpp -o ./build/BBB_Controller -std=gnu++0x
 
 clean:
 	rm -r ./build
