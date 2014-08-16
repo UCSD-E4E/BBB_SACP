@@ -117,7 +117,7 @@
 
 class MPU9150{
 	private:
-		int I2CBus, I2CAddress;
+		unsigned int I2CBus, I2CAddress;
 	public:
 		/**
 		 * MPU9150 constructor.  Accepts for arguments the I2C bus.  Assumes

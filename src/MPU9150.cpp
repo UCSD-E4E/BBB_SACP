@@ -52,7 +52,7 @@ int MPU9150::initialize(){
 	if(write(file, i2cbuf, 2) != 1){	// attempt to write 0x00 to 
 			// MPU9150_PWR_MGMT_1
 		// Failed transaction
-		printf("Failed to write 0x%02x to 0x%02x at 0x%0cx on %s\n", i2cbuf[1], 
+		printf("Failed to write 0x%02hhx to 0x%02hhx at 0x%02x on %s\n", i2cbuf[1], 
 				i2cbuf[0], I2CAddress, I2CBus);
 		cout << strerror(errno) << endl << endl;
 		return 3;
@@ -89,7 +89,7 @@ int MPU9150::initialize(){
 	i2cbuf[1] = (1 << 1);	// enable I2C bypass
 	if(write(file, i2cbuf, 2) != 1){	// attempt to write data
 		// Failed transaction
-		printf("Failed to write 0x%02x to 0x%02x at 0x%0cx on %s\n", i2cbuf[1], 
+		printf("Failed to write 0x%02hhx to 0x%02hhx at 0x%02x on %s\n", i2cbuf[1], 
 				i2cbuf[0], I2CAddress, I2CBus);
 		cout << strerror(errno) << endl << endl;
 		return 3;
@@ -111,8 +111,8 @@ int MPU9150::initialize(){
 	i2cbuf[1] = (1 << 0);	// enable Magnetometer to single measurement
 	if(write(magFile, i2cbuf, 2) != 1){	// attempt to write data
 		// Failed transaction
-		printf("Failed to write 0x%02x to 0x%02x at 0x%0cx on %s\n", i2cbuf[1], 
-				i2cbuf[0], MPU9150_MAG_ADDR, I2CBus);
+		printf("Failed to write 0x%02hhx to 0x%02hhx at 0x%02x on %s\n", i2cbuf[1], 
+				i2cbuf[0], I2CAddress, I2CBus);
 		cout << strerror(errno) << endl << endl;
 		return 3;
 	}
