@@ -13,6 +13,7 @@
 #include <linux/i2c-dev.h>
 #include "MPU9150.h"
 #include <cstdlib>
+#include <cstdint>
 using namespace std;
 
 // defines
@@ -34,50 +35,30 @@ int MPU9150::initialize(){
 	// Open I2C bus
 	char namebuf[64];
 	snprintf(namebuf, sizeof(namebuf), "/dev/i2c-%d", I2CBus);
-	int file;
-	if((file = open(namebuf, O_RDWR)) < 0){
+	if((mpuFile = open(namebuf, O_RDWR)) < 0){
 		cout << "Failed to open I2C bus " << namebuf << endl;
 		return 1;
 	}
 	// Set I2C bus control
-	if(ioctl(file, I2C_SLAVE, I2CAddress) < 0){
+	if(ioctl(mpuFile, I2C_SLAVE, I2CAddress) < 0){
 			cout << "I2C_SLAVE address " << hex << I2CAddress << dec 
 					<< " failed..." << endl;
 		return 2;
 	}
-	
+	int result;
 	// Wake up MPU9150: write 0x00 to MPU9150_PWR_MGMT_1
-	char i2cbuf[64] = {0};	// initialize empty buffer
-	i2cbuf[0] = MPU9150_PWR_MGMT_1;
-	i2cbuf[1] = 0x00;
-	if(write(file, i2cbuf, 2) != 2){	// attempt to write 0x00 to 
-			// MPU9150_PWR_MGMT_1
-		// Failed transaction
-		printf("Failed to write 0x%02hhx to 0x%02hhx at 0x%02x on /dev/i2c-%d\n", i2cbuf[1], 
-				i2cbuf[0], I2CAddress, I2CBus);
-		cout << strerror(errno) << endl << endl;
-		return 3;
+	// configure x-axis gyroscope as clock source
+	if(result = writeByte(mpuFile, MPU9150_PWR_MGMT_1, 0x00 | (1 << 0))){
+		return result;
 	}
 	
 	// Check device identity
-	// Write register address
-	i2cbuf[0] = MPU9150_WHO_AM_I;	// read from MPU9150_WHO_AM_I
-	if(write(file, i2cbuf, 1) != 1){	// attempt to push read register address
-		// Failed transaction
-		cout << "Failed to write MPU9150_WHO_AM_I to I2C device!" << endl;
-		cout << strerror(errno) << endl << endl;
-		return (3);
+	uint8_t deviceID;
+	if(result = readByte(mpuFile, MPU9150_WHO_AM_I, *deviceID)){
+		return result;
 	}
 	
-	// Read MPU9150_WHO_AM_I register
-	if(read(file, i2cbuf, 1) != 1){	// attempt to pull read register
-		// Failed transaction
-		cout << "Failed to read register contents from I2C device!" <<  endl;
-		cout << strerror(errno) << endl << endl;
-		return (4);
-	}
-	
-	if(i2cbuf[0] != 0x68){
+	if(deviceID != 0x68){
 		// Failed to confirm device
 		cout << "Failed to confirm device identity!" << endl;
 		cout << "Device identity: 0x" << hex << i2cbuf[0] << dec << endl 
@@ -85,15 +66,19 @@ int MPU9150::initialize(){
 		return 5;
 	}
 	
+	// configure device
+	// set gyro to +/- 250 deg/sec
+	if(result = writeBits(mpuFile, MPU9150_GYRO_CONFIG, ~(0x03 << 3), 0x18)){
+		return result;
+	}
+	// set accel to +/- 2g
+	if(result = writeBits(mpuFile, MPU9150_ACCEL_CONFIG, ~(0x03 << 3), 0x18)){
+		return result;
+	}
+	
 	// Enable magnetometer
-	i2cbuf[0] = MPU9150_I2C_INT_PIN_CFG;
-	i2cbuf[1] = (1 << 1);	// enable I2C bypass
-	if(write(file, i2cbuf, 2) != 2){	// attempt to write data
-		// Failed transaction
-		printf("Failed to write 0x%02hhx to 0x%02hhx at 0x%02x on /dev/i2c-%d\n", i2cbuf[1], 
-				i2cbuf[0], I2CAddress, I2CBus);
-		cout << strerror(errno) << endl << endl;
-		return 3;
+	if(result = writeByte(mpuFile, MPU9150_I2C_INT_PIN_CFG, (1 << 1))){
+		return result;
 	}
 	
 	// Access magnetometer at MPU9150_MAG_ADDR
@@ -108,34 +93,16 @@ int MPU9150::initialize(){
 		return 2;
 	}
 	
-	i2cbuf[0] = MPU9150_MAG_CNTL;
-	i2cbuf[1] = (1 << 0);	// enable Magnetometer to single measurement
-	if(write(magFile, i2cbuf, 2) != 2){	// attempt to write data
-		// Failed transaction
-		printf("Failed to write 0x%02hhx to 0x%02hhx at 0x%02x on /dev/i2c-%d\n", i2cbuf[1], 
-				i2cbuf[0], I2CAddress, I2CBus);
-		cout << strerror(errno) << endl << endl;
-		return 3;
+	// Configure magnetometer
+	if(result = writeByte(magFile, MPU9150_MAG_CNTL, (1 << 0))){
+		return result;
 	}
 	
 	// verify magnetometer
-	i2cbuf[0] = MPU9150_MAG_WIA;
-	if(write(magFile, i2cbuf, 1) !=1){	// attempt to write read register addr
-		// Failed transaction
-		cout << "Failed to write read register address to I2C magnetometer!" << endl;
-		cout << strerror(errno) << endl << endl;
-		return (3);
+	if(result = readByte(magFile, MPU9150_MAG_WIA, *deviceID)){
+		return result;
 	}
-	
-	// Read MPU0150_MAG_WIA register
-	if(read(magFile, i2cbuf, 1) != 1){	// attempt to pull read register
-		// Failed transaction
-		cout << "Failed to read register contents from I2C device!" <<  endl;
-		cout << strerror(errno) << endl << endl;
-		return (4);
-	}
-	
-	if(i2cbuf[0] != 0x48){
+	if(deviceID != 0x48){
 		// Failed to confirm device
 		cout << "Failed to confirm device identity!" << endl;
 		cout << "Device identity: 0x" << hex << i2cbuf[0] << dec << endl 
@@ -167,5 +134,147 @@ MPU9150::MPU9150(int bus, int address){
  * Update function.  Records full sensor state.
  */
 int MPU9150::getSensorState(){
+	uint8_t buffer;
+	int result;
+	if(result = readByte(mpuFile, MPU9150_ACCEL_XOUT_H, *buffer)){
+		return result;
+	}
+	accel_X = buffer << 8;
+	if(result = readByte(mpuFile, MPU9150_ACCEL_XOUT_L, *buffer)){
+		return result;
+	}
+	accel_X |= buffer;
+	if(result = readByte(mpuFile, MPU9150_ACCEL_YOUT_H, *buffer)){
+		return result;
+	}
+	accel_Y = buffer << 8;
+	if(result = readByte(mpuFile, MPU9150_ACCEL_YOUT_L, *buffer)){
+		return result;
+	}
+	accel_Y |= buffer;
+	if(result = readByte(mpuFile, MPU9150_ACCEL_ZOUT_H, *buffer)){
+		return result;
+	}
+	accel_Z = buffer << 8;
+	if(result = readByte(mpuFile, MPU9150_ACCEL_ZOUT_L, *buffer)){
+		return result;
+	}
+	accel_Z |= buffer;
+	
+	if(result = readByte(mpuFile, MPU9150_TEMP_OUT_H, *buffer)){
+		return result;
+	}
+	temp = buffer << 8;
+	if(result = readByte(mpuFile, MPU9150_TEMP_OUT_L, *buffer)){
+		return result;
+	}
+	temp |= buffer;
+	
+	if(result = readByte(mpuFile, MPU9150_GYRO_XOUT_H, *buffer)){
+		return result;
+	}
+	gyroX = buffer << 8;
+	if(result = readByte(mpuFile, MPU9150_GYRO_XOUT_L, *buffer)){
+		return result;
+	}
+	gyroX |= buffer;
+	if(result = readByte(mpuFile, MPU9150_GYRO_YOUT_H, *buffer)){
+		return result;
+	}
+	gyroY = buffer << 8;
+	if(result = readByte(mpuFile, MPU9150_GYRO_YOUT_L, *buffer)){
+		return result;
+	}
+	gyroY |= buffer;
+	if(result = readByte(mpuFile, MPU9150_GYRO_ZOUT_H, *buffer)){
+		return result;
+	}
+	gyroZ = buffer << 8;
+	if(result = readByte(mpuFile, MPU9150_GYRO_ZOUT_L, *buffer)){
+		return result;
+	}
+	gyroZ |= buffer;
+	
+	if(result = readByte(magFile, MPU9150_MAG_HXH, *buffer)){
+		return result;
+	}
+	magX = buffer << 8;
+	if(result = readByte(magFile, MPU9150_MAG_HXL, *buffer)){
+		return result;
+	}
+	magX |= buffer;
+	if(result = readByte(magFile, MPU9150_MAG_HYH, *buffer)){
+		return result;
+	}
+	magY = buffer << 8;
+	if(result = readByte(magFile, MPU9150_MAG_HYL, *buffer)){
+		return result;
+	}
+	magY |= buffer;
+	if(result = readByte(magFile, MPU9150_MAG_HZH, *buffer)){
+		return result;
+	}
+	magZ = buffer << 8;
+	if(result = readByte(magFile, MPU9150_MAG_HZL, *buffer)){
+		return result;
+	}
+	magZ |= buffer;
+	return 0;
+}
+
+/**
+ * @return	0	Normal return, no problems
+ *			1	Error: Failed to open I2C bus
+ *			2	Error: Failed to access I2C device
+ *			3	Error: Failed to write to I2C device
+ *			4	Error: Failed to read from I2C device
+ *			5	Error: Failed to verify device identity
+ */
+int MPU9150::writeByte(int device, uint8_t regAddr, uint8_t value){
+	uint8_t i2cbuf[2] = {regAddr, value};	// initialize empty buffer
+	if(write(device, i2cbuf, 2) != 2){
+		// Failed transaction
+		printf("Failed to write 0x%" PRIu8 " to 0x%" PRIu8 " at 0x%" PRIu8 " on /dev/i2c-%" PRIu8 "\n", i2cbuf[1], i2cbuf[0], (device == mpuFile) ? I2CAddress : MPU9150_MAG_ADDR, I2CBus);
+		cout << strerror(errno) << endl << endl;
+		return 3;
+	}
+	return 0;
+}
+
+int MPU9150::writeBits(int device, uint8_t regAddr, uint8_t value,
+		uint8_t bitmask){
+	uint8_t i2cbuf[2] = {regAddr};
+	if(write(device, i2cbuf, 1) != 1){
+		printf("Failed to write 0x%" PRIu8 " to 0x%" PRIu8 " on /dev/i2c-%" PRIu8 "\n", i2cbuf[0], (device == mpuFile) ? I2CAddress : MPU9150_MAG_ADDR, I2CBus);
+		cout << strerror(errno) << endl << endl;
+		return 3;
+	}
+	if(read(device, i2cbuf, 1) != 1){
+		printf("Failed to read from 0x%" PRIu8 " at 0x%" PRIu8 " on /dev/i2c-%" PRIu8 "\n", regAddr, (device == mpuFile) ? I2CAddress : MPU9150_MAG_ADDR, I2CBus);
+		cout << strerror(errno) << endl << endl;
+		return 4;
+	}
+	i2cbuf[1] = i2cbuf[0] & ~bitmask | value;
+	i2cbuf[0] = regAddr;
+	if(write(device, i2cbuf, 2) != 2){
+		// Failed transaction
+		printf("Failed to write 0x%" PRIu8 " to 0x%" PRIu8 " at 0x%" PRIu8 " on /dev/i2c-%" PRIu8 "\n", i2cbuf[1], i2cbuf[0], (device == mpuFile) ? I2CAddress : MPU9150_MAG_ADDR, I2CBus);
+		cout << strerror(errno) << endl << endl;
+		return 3;
+	}
+	return 0;
+}
+
+int MPU9150::readByte(int device, uint8_t regAddr, uint8_t* value);
+	if(write(device, regAddr, 1) != 1){
+		printf("Failed to write 0x%" PRIu8 " to 0x%" PRIu8 " on /dev/i2c-%" PRIu8 "\n", regAddr, (device === mpuFile) ? I2CAddress : MPU9150_MAG_ADDR, I2CBus);
+		cout << strerror(errno) << endl << endl;
+		return 3;
+	}
+	if(read(device, *value, 1) != 1){
+		printf("Failed to read from 0x%" PRIu8 " at 0x%" PRIu8 " on /dev/i2c-%" PRIu8 "\n", regAddr, (device == mpuFile) ? I2CAddress : MPU9150_MAG_ADDR, I2CBus);
+		cout << strerror(errno) << endl << endl;
+		return 4;
+	}
 	return 0;
 }

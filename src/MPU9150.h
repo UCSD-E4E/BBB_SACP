@@ -1,6 +1,8 @@
 
 #ifndef MPU9150_H_
 #define MPU9150_H_
+// Includes
+#include <cstdint>
 
 // Gyroscope and Accelerometer Registers
 #define MPU9150_SELF_TEST_X			0x0D
@@ -117,7 +119,15 @@
 
 class MPU9150{
 	private:
-		unsigned int I2CBus, I2CAddress;
+		uint8_t I2CBus, I2CAddress;
+		int writeByte(int device, uint8_t regAddr, uint8_t value);
+		int writeBits(int device, uint8_t regAddr, uint8_t value, uint8_t bitmask);
+		int readByte(int device, uint8_t regAddr, uint8_t* value);
+		int mpuFile, magFile;
+		int16_t accel_X, accel_Y, accel_Z;
+		int16_t temp;
+		int16_t gyro_X, gyro_Y, gyro_Z;
+		int16_t mag_X, mag_Y, mag_Z;
 	public:
 		/**
 		 * MPU9150 constructor.  Accepts for arguments the I2C bus.  Assumes
