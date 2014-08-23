@@ -277,3 +277,15 @@ int MPU9150::readByte(int device, uint8_t regAddr, uint8_t* value){
 	}
 	return 0;
 }
+
+float MPU9150::getAccelX(){
+	return 2.0 * accel_X;
+}
+
+float MPU9150::getAccelY(){
+	return 2.0 * accelY;
+}
+
+float MPU9150::getAccelZ(){
+	return 2.0 * accelZ;
+}

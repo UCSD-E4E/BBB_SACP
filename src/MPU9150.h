@@ -151,6 +151,16 @@ class MPU9150{
 		 * Update function.  Records full sensor state.
 		 */
 		int getSensorState();
+		
+		float getAccelX();
+		float getAccelY();
+		float getAccelZ();
+		int getGyroX();
+		int getGyroY();
+		int getGyroZ();
+		int getMagX();
+		int getMagY();
+		int getMagZ();
 };
 
 
