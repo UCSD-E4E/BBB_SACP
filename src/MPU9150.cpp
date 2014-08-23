@@ -82,7 +82,6 @@ int MPU9150::initialize(){
 	}
 	
 	// Access magnetometer at MPU9150_MAG_ADDR
-	int magFile;
 	if((magFile = open(namebuf, O_RDWR)) < 0){
 		cout << "Failed to open I2C bus " << namebuf << endl;
 		return 1;
@@ -233,7 +232,7 @@ int MPU9150::writeByte(int device, uint8_t regAddr, uint8_t value){
 	uint8_t i2cbuf[2] = {regAddr, value};	// initialize empty buffer
 	if(write(device, i2cbuf, 2) != 2){
 		// Failed transaction
-		printf("Failed to write 0x%" PRIu8 " to 0x%" PRIu8 " at 0x%" PRIu8 " on /dev/i2c-%" PRIu8 "\n", i2cbuf[1], i2cbuf[0], (device == mpuFile) ? I2CAddress : MPU9150_MAG_ADDR, I2CBus);
+		printf("Failed to write 0x%02X to 0x%02X at 0x%02X on /dev/i2c-%i\n", i2cbuf[1], i2cbuf[0], (device == mpuFile) ? I2CAddress : MPU9150_MAG_ADDR, I2CBus);
 		cout << strerror(errno) << endl << endl;
 		return 3;
 	}
@@ -244,12 +243,12 @@ int MPU9150::writeBits(int device, uint8_t regAddr, uint8_t value,
 		uint8_t bitmask){
 	uint8_t i2cbuf[2] = {regAddr};
 	if(write(device, i2cbuf, 1) != 1){
-		printf("Failed to write 0x%" PRIu8 " to 0x%" PRIu8 " on /dev/i2c-%" PRIu8 "\n", i2cbuf[0], (device == mpuFile) ? I2CAddress : MPU9150_MAG_ADDR, I2CBus);
+		printf("Failed to write 0x%02X to 0x%02X on /dev/i2c-%i\n", i2cbuf[0], (device == mpuFile) ? I2CAddress : MPU9150_MAG_ADDR, I2CBus);
 		cout << strerror(errno) << endl << endl;
 		return 3;
 	}
 	if(read(device, i2cbuf, 1) != 1){
-		printf("Failed to read from 0x%" PRIu8 " at 0x%" PRIu8 " on /dev/i2c-%" PRIu8 "\n", regAddr, (device == mpuFile) ? I2CAddress : MPU9150_MAG_ADDR, I2CBus);
+		printf("Failed to read from 0x%02X at 0x%02X on /dev/i2c-%i\n", regAddr, (device == mpuFile) ? I2CAddress : MPU9150_MAG_ADDR, I2CBus);
 		cout << strerror(errno) << endl << endl;
 		return 4;
 	}
@@ -257,7 +256,7 @@ int MPU9150::writeBits(int device, uint8_t regAddr, uint8_t value,
 	i2cbuf[0] = regAddr;
 	if(write(device, i2cbuf, 2) != 2){
 		// Failed transaction
-		printf("Failed to write 0x%" PRIu8 " to 0x%" PRIu8 " at 0x%" PRIu8 " on /dev/i2c-%" PRIu8 "\n", i2cbuf[1], i2cbuf[0], (device == mpuFile) ? I2CAddress : MPU9150_MAG_ADDR, I2CBus);
+		printf("Failed to write 0x%02X to 0x%02X at 0x%02X on /dev/i2c-%i\n", i2cbuf[1], i2cbuf[0], (device == mpuFile) ? I2CAddress : MPU9150_MAG_ADDR, I2CBus);
 		cout << strerror(errno) << endl << endl;
 		return 3;
 	}
@@ -266,12 +265,12 @@ int MPU9150::writeBits(int device, uint8_t regAddr, uint8_t value,
 
 int MPU9150::readByte(int device, uint8_t regAddr, uint8_t* value){
 	if(write(device, &regAddr, 1) != 1){
-		printf("Failed to write 0x%" PRIu8 " to 0x%" PRIu8 " on /dev/i2c-%" PRIu8 "\n", regAddr, (device == mpuFile) ? I2CAddress : MPU9150_MAG_ADDR, I2CBus);
+		printf("Failed to write 0x%02X to 0x%02X on /dev/i2c-%i\n", regAddr, (device == mpuFile) ? I2CAddress : MPU9150_MAG_ADDR, I2CBus);
 		cout << strerror(errno) << endl << endl;
 		return 3;
 	}
 	if(read(device, value, 1) != 1){
-		printf("Failed to read from 0x%" PRIu8 " at 0x%" PRIu8 " on /dev/i2c-%" PRIu8 "\n", regAddr, (device == mpuFile) ? I2CAddress : MPU9150_MAG_ADDR, I2CBus);
+		printf("Failed to read from 0x%02X at 0x%02X on /dev/i2c-%i\n", regAddr, (device == mpuFile) ? I2CAddress : MPU9150_MAG_ADDR, I2CBus);
 		cout << strerror(errno) << endl << endl;
 		return 4;
 	}
@@ -279,13 +278,13 @@ int MPU9150::readByte(int device, uint8_t regAddr, uint8_t* value){
 }
 
 float MPU9150::getAccelX(){
-	return 2.0 * accel_X;
+	return accel_X / 16384.0;
 }
 
 float MPU9150::getAccelY(){
-	return 2.0 * accelY;
+	return accel_Y / 16384.0;
 }
 
 float MPU9150::getAccelZ(){
-	return 2.0 * accelZ;
+	return accel_Z / 16384.0;
 }
