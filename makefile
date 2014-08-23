@@ -9,6 +9,9 @@ clean:
 run:
 	make all
 	./build/BBB_Controller
-test:
+testDebug:
 	g++ ./src/test.cpp ./src/MPU9150.cpp -o ./build/test -std=gnu++0x -g -Wall
 	gdb ./build/test
+test:
+	g++ ./src/test.cpp ./src/MPU9150.cpp -o ./build/test -std=gnu++0x -g -Wall
+	./build/test
