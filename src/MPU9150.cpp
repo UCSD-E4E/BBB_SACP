@@ -265,12 +265,12 @@ int MPU9150::writeBits(int device, uint8_t regAddr, uint8_t value,
 }
 
 int MPU9150::readByte(int device, uint8_t regAddr, uint8_t* value){
-	if(write(device, (const void*)regAddr, 1) != 1){
-		printf("Failed to write 0x%" PRIu8 " to 0x%" PRIu8 " on /dev/i2c-%" PRIu8 "\n", regAddr, (device === mpuFile) ? I2CAddress : MPU9150_MAG_ADDR, I2CBus);
+	if(write(device, &regAddr, 1) != 1){
+		printf("Failed to write 0x%" PRIu8 " to 0x%" PRIu8 " on /dev/i2c-%" PRIu8 "\n", regAddr, (device == mpuFile) ? I2CAddress : MPU9150_MAG_ADDR, I2CBus);
 		cout << strerror(errno) << endl << endl;
 		return 3;
 	}
-	if(read(device, *value, 1) != 1){
+	if(read(device, value, 1) != 1){
 		printf("Failed to read from 0x%" PRIu8 " at 0x%" PRIu8 " on /dev/i2c-%" PRIu8 "\n", regAddr, (device == mpuFile) ? I2CAddress : MPU9150_MAG_ADDR, I2CBus);
 		cout << strerror(errno) << endl << endl;
 		return 4;
