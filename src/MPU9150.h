@@ -152,15 +152,50 @@ class MPU9150{
 		 */
 		int getSensorState();
 		
+		/**
+		 * Returns the acceleration in the X axis in g's.
+		 */
 		float getAccelX();
+		
+		/**
+		 * Returns the acceleration in the Y axis in g's.
+		 */
 		float getAccelY();
+		
+		/**
+		 * Returns the acceleration in the Z axis in g's.
+		 */
 		float getAccelZ();
-		int getGyroX();
-		int getGyroY();
-		int getGyroZ();
-		int getMagX();
-		int getMagY();
-		int getMagZ();
+		
+		/**
+		 * Returns the rotational velocity in the X axis in degrees per second.
+		 */
+		float getGyroX();
+		
+		/**
+		 * Returns the rotational velocity in the Y axis in degrees per second.
+		 */
+		float getGyroY();
+		
+		/**
+		 * Returns the rotational velocity in the Z axis in degrees per second.
+		 */
+		float getGyroZ();
+		
+		/**
+		 * Returns the magnetic field strength in the X axis in microteslas.
+		 */
+		float getMagX();
+		
+		/**
+		 * Returns the magnetic field strength in the Y axis in microteslas.
+		 */
+		float getMagY();
+		
+		/**
+		 * Returns the magnetic field strength in the Z axis in microteslas.
+		 */
+		float getMagZ();
 };
 
 

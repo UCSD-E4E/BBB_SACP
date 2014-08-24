@@ -288,3 +288,27 @@ float MPU9150::getAccelY(){
 float MPU9150::getAccelZ(){
 	return accel_Z / 16384.0;
 }
+
+float MPU9150::getGyroX(){
+	return gyro_X / 131.072;
+}
+
+float MPU9150::getGyroY(){
+	return gyro_Y / 131.072;
+}
+
+float MPU9150::getGyroZ(){
+	return gyro_Z / 131.072;
+}
+
+float MPU9150::getMagX(){
+	return mag_X / 3.3319;
+}
+
+float MPU9150::getMagY(){
+	return mag_Y / 3.3319;
+}
+
+float MPU9150::getMagZ(){
+	return mag_Z / 3.3319;
+}
