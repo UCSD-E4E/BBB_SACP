@@ -117,6 +117,25 @@
 
 #define MPU9150_MAG_ADDR			0x0C
 
+#define MPU9150_ACCEL_X_MIDPT		0][0
+#define MPU9150_ACCEL_X_SENSE		0][1
+#define MPU9150_ACCEL_Y_MIDPT		0][2
+#define MPU9150_ACCEL_Y_SENSE		0][3
+#define MPU9150_ACCEL_Z_MIDPT		0][4
+#define MPU9150_ACCEL_Z_SENSE		0][5
+#define MPU9150_COMP_X_MIDPT		1][0
+#define MPU9150_COMP_X_SENSE		1][1
+#define MPU9150_COMP_Y_MIDPT		1][2
+#define MPU9150_COMP_Y_SENSE		1][3
+#define MPU9150_COMP_Z_MIDPT		1][4
+#define MPU9150_COMP_Z_SENSE		1][5
+#define MPU9150_MAG_X_MIDPT			2][0
+#define MPU9150_MAG_X_SENSE			2][1
+#define MPU9150_MAG_Y_MIDPT			2][2
+#define MPU9150_MAG_Y_SENSE			2][3
+#define MPU9150_MAG_Z_MIDPT			2][4
+#define MPU9150_MAG_Z_SENSE			2][5
+
 class MPU9150{
 	private:
 		uint8_t I2CBus, I2CAddress;
@@ -128,6 +147,7 @@ class MPU9150{
 		int16_t temp;
 		int16_t gyro_X, gyro_Y, gyro_Z;
 		int16_t mag_X, mag_Y, mag_Z;
+		float calibrationValues[3][6];
 	public:
 		/**
 		 * MPU9150 constructor.  Accepts for arguments the I2C bus.  Assumes
