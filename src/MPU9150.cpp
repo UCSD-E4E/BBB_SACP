@@ -11,7 +11,7 @@
 #include <cstring>
 #include <fcntl.h>
 #include <linux/i2c-dev.h>
-#include "MPU9150.h"
+#include "MPU9150.hpp"
 #include <cstdlib>
 #include <cstdint>
 #include <cinttypes>
