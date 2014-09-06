@@ -312,3 +312,7 @@ float MPU9150::getMagY(){
 float MPU9150::getMagZ(){
 	return mag_Z / 3.3319;
 }
+
+bool MPU9150::calibrate(){
+	return false;
+}
