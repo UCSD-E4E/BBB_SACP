@@ -315,4 +315,58 @@ float MPU9150::getMagZ(){
 
 bool MPU9150::calibrate(){
 	return false;
+	
+	int16_t sample[6][3];
+	
+	// get averaged samples
+	// band pass filter the samples to remove outliers (use 3 sigma bandpass)
+	for(int i = 0; i < 6; i++){
+		// for each side
+		char* msg;
+		switch(i){
+			case 0:
+				msg = "Point flat";
+				break;
+			case 1:
+				msg = "Point pitched forward";
+				break;
+			case 2:
+				msg = "Point pitched backward";
+				break;
+			case 3:
+				msg = "Point rolled left";
+				break;
+			case 4:
+				msg = "Point rolled right";
+				break;
+			case 5:
+				msg = "Point upside-down";
+				break;
+			}
+		}
+		cout << msg << endl;
+		cin.ignore();	// update marker to current end of buffer
+		cin >> msg;	// wait for input
+		
+		// Establish initial boundary example
+		int32_t sum[3];
+		int64_t sumSquares[3];
+		for(int j = 0; j < 32; j++){
+			getSensorState();	// Update local copies
+			sum[0] += getAccelX();
+			sum[1] += getAccelY();
+			sum[2] += getAccelZ();
+			sumSquares[0] += getAccelX() * getAccelX();
+			sumSquares[1] += getAccelY() * getAccelY();
+			sumSquares[2] += getAccelZ() * getAccelZ();
+		}
+		
+		// Compute variance
+		int64_t variance[3];
+		for(int j = 0; j < 3; j++){
+			variance[j] = 1 + sumSquares[j] - (sum[j] * sum[j]) / 32;
+		}
+		
+		//TODO: continue calibration routine.
+		
 }
