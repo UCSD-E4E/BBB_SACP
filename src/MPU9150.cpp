@@ -321,7 +321,7 @@ bool MPU9150::calibrate(){
 	// band pass filter the samples to remove outliers (use 3 sigma bandpass)
 	for(int i = 0; i < 6; i++){
 		// for each side
-		char* msg;
+		const char* msg;
 		switch(i){
 			case 0:
 				msg = "Point flat";
