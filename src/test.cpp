@@ -17,7 +17,7 @@ int main(){
 	cout << sensor.getAccelY() << endl;
 	cout << sensor.getAccelZ() << endl;
 	
-	if(!calibrate()){
+	if(!sensor.calibrate()){
 		return 1;
 	}
 	return 0;
