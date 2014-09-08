@@ -414,7 +414,7 @@ bool MPU9150::calibrate(){
 		}
 		
 		reset_calibration_matrices();
-	}	
+	}
 }
 
 /**
@@ -422,7 +422,7 @@ bool MPU9150::calibrate(){
  *
  * @param	*data	Address of the beginning of the data location, expected as a sequence of 18 int32_t variables, ordered first by axis and then by sample (6 samples of 3 axis each)
  */
-void compute_calibration_matrices(int32_t data[]){
+void MPU9150::compute_calibration_matrices(int32_t data[]){
 	reset_calibration_matrices();
 	for(int i = 0; i < 6; i++){
 		update_calibration_matrices(data + i * 3);
@@ -431,7 +431,7 @@ void compute_calibration_matrices(int32_t data[]){
 
 /**
  */
-void update_calibration_matrices(int32_t data[]){
+void MPU9150::update_calibration_matrices(int32_t data[]){
 	int j, k;
 	float dx, b;
 	float residual = 1.0;
@@ -456,7 +456,7 @@ void update_calibration_matrices(int32_t data[]){
 /**
  * Zeroes dS and JS matrices
  */
-void reset_calibration_matrices(){
+void MPU9150::reset_calibration_matrices(){
 	int j, k;
 	for(j = 0; j < 6; j++){
 		dS[j] = 0;
@@ -466,7 +466,7 @@ void reset_calibration_matrices(){
 	}
 }
 
-void find_delta(){
+void MPU9150::find_delta(){
 	int i, j, k;
 	float mu;
 	
@@ -482,8 +482,8 @@ void find_delta(){
 		}
 	}
 	
-	for(i = 5, i >= 0; i--){
-		ds[i] /= JS{i][i];
+	for(i = 5; i >= 0; i--){
+		dS[i] /= JS[i][i];
 		JS[i][i] = 1;
 		for(j = 0; j < i; j++){
 			mu = JS[i][j];
@@ -496,3 +496,4 @@ void find_delta(){
 		delta[i] = dS[i];
 	}
 }
+
