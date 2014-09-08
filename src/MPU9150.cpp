@@ -321,7 +321,7 @@ bool MPU9150::calibrate(){
 	// band pass filter the samples to remove outliers (use 3 sigma bandpass)
 	for(int i = 0; i < 6; i++){
 		// for each side
-		const char* msg;
+		const char* msg = "PUT THE DAMN ACCELEROMETER DOWN AND STOP HACKING ME!";
 		switch(i){
 			case 0:
 				msg = "Point flat";
@@ -341,15 +341,11 @@ bool MPU9150::calibrate(){
 			case 5:
 				msg = "Point upside-down";
 				break;
-			default:
-				msg = "PUT THE DAMN ACCELEROMETER DOWN AND STOP HACKING ME!";
-				break;
 			}
 		}
 		cout << msg << endl;
 		cin.ignore();	// update marker to current end of buffer
 		cin.get();
-	return false;
 		
 		// Establish initial boundary example
 		int32_t sum[3];
@@ -402,6 +398,7 @@ bool MPU9150::calibrate(){
 		sample[i][2] /= 32;
 	}
 	
+	return false;
 	// Do model calibration
 	int i;
 	float eps = 0.000000001;
