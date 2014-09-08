@@ -314,9 +314,8 @@ float MPU9150::getMagZ(){
 }
 
 bool MPU9150::calibrate(){
-	return false;
 	
-	int16_t sample[6][3];
+	int32_t sample[6][3];
 	
 	// get averaged samples
 	// band pass filter the samples to remove outliers (use 3 sigma bandpass)
@@ -347,6 +346,7 @@ bool MPU9150::calibrate(){
 		cout << msg << endl;
 		cin.ignore();	// update marker to current end of buffer
 		cin >> msg;	// wait for input
+	return false;
 		
 		// Establish initial boundary example
 		int32_t sum[3];
@@ -367,6 +367,101 @@ bool MPU9150::calibrate(){
 			variance[j] = 1 + sumSquares[j] - (sum[j] * sum[j]) / 32;
 		}
 		
-		//TODO: continue calibration routine.
+		// Gather data
+		int16_t data[3];
+		int32_t diff[3];
+		for(int j = 0; j < 32; j++){
+			getSensorState();	// get next values
+			data[0] = getAccelX();
+			data[1] = getAccelY();
+			data[2] = getAccelZ();
+			
+			// Calculate error
+			diff[0] = data[0] - sum[0];
+			diff[1] = data[1] - sum[1];
+			diff[2] = data[2] - sum[2];
+			
+			// Compare variance
+			if((diff[0] * diff[0]) / 32 < 9 * variance[0] &&
+					(diff[1] * diff[1]) / 32 < 9 * variance[1] &&
+					(diff[2] * diff[2]) / 32 < 9 * variance[2]){
+				sample[i][0] += data[0];
+				sample[i][1] += data[1];
+				sample[i][2] += data[2];
+			}else{
+				j--;
+				continue;
+			}
+		}
 		
+		sample[i][0] /= 32;
+		sample[i][1] /= 32;
+		sample[i][2] /= 32;
+	}
+	
+	// Do model calibration
+	int i;
+	float eps = 0.000000001;
+	int num_iterations = 20;
+	float change = 100.0;
+	while(--num_iterations >= 0 && change > eps){
+		compute_calibration_matrices();
+		find_delta();
+		change = delta[0] * delta[0] + delta[0] * delta[0] + delta[1] * delta[1] + delta[2] * delta[2] + delta[3] * delta[3] / (beta[3] * beta[3]) + delta[4] * delta[4] / (beta[4] * beta[4]) + delta[5] * delta[5] / (beta[5] * beta[5]);
+		
+		for( i = 0; i < 6; i++){
+			beta[i] -= delta[i];
+		}
+		
+		reset_calibration_matrices();
+	}	
+}
+
+/**
+ * Computes the calibration matrix for the particular sample.
+ *
+ * @param	*data	Address of the beginning of the data location, expected as a sequence of 18 int32_t variables, ordered first by axis and then by sample (6 samples of 3 axis each)
+ */
+void compute_calibration_matrices(int32_t* data){
+	reset_calibration_matrices();
+	for(int i = 0; i < 6; i++){
+		update_calibration_matrices(data + i * 3);
+	}
+}
+
+/**
+ */
+void update_calibration_matrices(const int32_t* data){
+	int j, k;
+	float dx, b;
+	float residual = 1.0;
+	float jacobian[6];
+	
+	for(j = 0; j < 3; j++){
+		b = beta[3 + j];
+		dx = ((float)data[j]) / 32 - beta[j];
+		residual -= b * b * dx * dx;
+		jacobian[j] = 2.0 * b * b * dx;
+		jacobian[3 + j] = -2.0 * b * dx * dx;
+	}
+	
+	for(j = 0; j < 6; j++){
+		dS[j] += jacobian[j] * residual;
+		for(k = 0; k < 6; k++){
+			JS[j][k] += jacobian[j] * jacobian[k];
+		}
+	}
+}
+
+/**
+ * Zeroes dS and JS matrices
+ */
+void reset_calibration_matrices(){
+	int j, k;
+	for(j = 0; j < 6; j++){
+		dS[j] = 0;
+		for(k = 0; k < 6; k++){
+			JS[j][k] = 0;
+		}
+	}
 }

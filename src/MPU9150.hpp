@@ -134,8 +134,14 @@ class MPU9150{
 		int16_t temp;
 		int16_t gyro_X, gyro_Y, gyro_Z;
 		int16_t mag_X, mag_Y, mag_Z;
-		float accelOffset[3];
-		float accelScale[3];
+		
+		// Accelerometer calibration constants
+		float beta[6];	// Param for accelerometer calibration model.
+						// 0-2 are 0G offset
+						// 3-5 are sensitivity factors
+		float JS[6][6];
+		float dS[6];
+		float delta[6];
 	public:
 		/**
 		 * MPU9150 constructor.  Accepts for arguments the I2C bus.  Assumes
