@@ -405,7 +405,7 @@ bool MPU9150::calibrate(){
 	int num_iterations = 20;
 	float change = 100.0;
 	while(--num_iterations >= 0 && change > eps){
-		compute_calibration_matrices();
+		compute_calibration_matrices(sample));
 		find_delta();
 		change = delta[0] * delta[0] + delta[0] * delta[0] + delta[1] * delta[1] + delta[2] * delta[2] + delta[3] * delta[3] / (beta[3] * beta[3]) + delta[4] * delta[4] / (beta[4] * beta[4]) + delta[5] * delta[5] / (beta[5] * beta[5]);
 		
@@ -422,7 +422,7 @@ bool MPU9150::calibrate(){
  *
  * @param	*data	Address of the beginning of the data location, expected as a sequence of 18 int32_t variables, ordered first by axis and then by sample (6 samples of 3 axis each)
  */
-void compute_calibration_matrices(int32_t* data){
+void compute_calibration_matrices(int32_t data[][3]){
 	reset_calibration_matrices();
 	for(int i = 0; i < 6; i++){
 		update_calibration_matrices(data + i * 3);
