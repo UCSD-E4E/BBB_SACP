@@ -33,6 +33,8 @@ using namespace std;
  *			5	Error: Failed to verify device identity
  */
 int MPU9150::initialize(){
+	// Initialize calibration constants
+	beta = {0, 0, 0, 16384.0, 16384.0, 16384.0};
 	// Open I2C bus
 	char namebuf[64];
 	snprintf(namebuf, sizeof(namebuf), "/dev/i2c-%d", I2CBus);
