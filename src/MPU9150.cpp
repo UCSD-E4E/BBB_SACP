@@ -465,3 +465,34 @@ void reset_calibration_matrices(){
 		}
 	}
 }
+
+void find_delta(){
+	int i, j, k;
+	float mu;
+	
+	for(i = 0; i < 6; i++){
+		for(j = i + 1; j < 6; j ++){
+			mu = JS[i][j] / JS[i][i];
+			if(mu != 0){
+				dS[j] -= mu * dS[i];
+				for(k = j; k < 6; k++){
+					JS[k][j] -= mu * JS[k][i];
+				}
+			}
+		}
+	}
+	
+	for(i = 5, i >= 0; i--){
+		ds[i] /= JS{i][i];
+		JS[i][i] = 1;
+		for(j = 0; j < i; j++){
+			mu = JS[i][j];
+			dS[j] -= mu * dS[i];
+			JS[i][j] = 0;
+		}
+	}
+	
+	for(i = 0; i < 6; i++){
+		delta[i] = dS[i];
+	}
+}
