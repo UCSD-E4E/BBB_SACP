@@ -286,15 +286,15 @@ int MPU9150::readByte(int device, uint8_t regAddr, uint8_t* value){
 }
 
 float MPU9150::getAccelX(){
-	return (accel_X + beta[0]) / beta[3];
+	return (accel_X + beta[0]) / beta[3] / 32767;
 }
 
 float MPU9150::getAccelY(){
-	return (accel_Y + beta[1]) / beta[4];
+	return (accel_Y + beta[1]) / beta[4] / 32767;
 }
 
 float MPU9150::getAccelZ(){
-	return (accel_Z + beta[2]) / beta[5];
+	return (accel_Z + beta[2]) / beta[5] / 32767;
 }
 
 float MPU9150::getGyroX(){
