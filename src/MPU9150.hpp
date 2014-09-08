@@ -142,8 +142,8 @@ class MPU9150{
 		float JS[6][6];
 		float dS[6];
 		float delta[6];
-		void compute_calibration_matrices(int32_t data[][3]);
-		void update_calibration_matrices(const int32_t* data);
+		void compute_calibration_matrices(int32_t data[]);
+		void update_calibration_matrices(int32_t data[]);
 		void reset_calibration_matrices();
 	public:
 		/**

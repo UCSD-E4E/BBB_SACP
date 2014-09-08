@@ -315,7 +315,7 @@ float MPU9150::getMagZ(){
 
 bool MPU9150::calibrate(){
 	
-	int32_t sample[6][3];
+	int32_t sample[18];
 	
 	// get averaged samples
 	// band pass filter the samples to remove outliers (use 3 sigma bandpass)
@@ -384,18 +384,18 @@ bool MPU9150::calibrate(){
 			if((diff[0] * diff[0]) / 32 < 9 * variance[0] &&
 					(diff[1] * diff[1]) / 32 < 9 * variance[1] &&
 					(diff[2] * diff[2]) / 32 < 9 * variance[2]){
-				sample[i][0] += data[0];
-				sample[i][1] += data[1];
-				sample[i][2] += data[2];
+				sample[i * 3 + 0] += data[0];
+				sample[i * 3 + 1] += data[1];
+				sample[i * 3 + 2] += data[2];
 			}else{
 				j--;
 				continue;
 			}
 		}
 		
-		sample[i][0] /= 32;
-		sample[i][1] /= 32;
-		sample[i][2] /= 32;
+		sample[i * 3 + 0] /= 32;
+		sample[i * 3 + 1] /= 32;
+		sample[i * 3 + 2] /= 32;
 	}
 	
 	return false;
@@ -422,7 +422,7 @@ bool MPU9150::calibrate(){
  *
  * @param	*data	Address of the beginning of the data location, expected as a sequence of 18 int32_t variables, ordered first by axis and then by sample (6 samples of 3 axis each)
  */
-void compute_calibration_matrices(int32_t data[][3]){
+void compute_calibration_matrices(int32_t data[]){
 	reset_calibration_matrices();
 	for(int i = 0; i < 6; i++){
 		update_calibration_matrices(data + i * 3);
@@ -431,7 +431,7 @@ void compute_calibration_matrices(int32_t data[][3]){
 
 /**
  */
-void update_calibration_matrices(const int32_t* data){
+void update_calibration_matrices(int32_t data[]){
 	int j, k;
 	float dx, b;
 	float residual = 1.0;
