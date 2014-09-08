@@ -136,7 +136,7 @@ class MPU9150{
 		int16_t mag_X, mag_Y, mag_Z;
 		
 		// Accelerometer calibration constants
-		float beta[6];	// Param for accelerometer calibration model.
+		float beta[6] = {0, 0, 0, 16384.0, 16384.0, 16384.0};	// Param for accelerometer calibration model.
 						// 0-2 are 0G offset
 						// 3-5 are sensitivity factors
 		float JS[6][6];
