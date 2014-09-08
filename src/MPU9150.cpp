@@ -315,8 +315,8 @@ float MPU9150::getMagZ(){
 
 bool MPU9150::calibrate(){
 	
-	int32_t sample[18];
-	
+	int32_t sample[18] = {0};
+
 	// get averaged samples
 	// band pass filter the samples to remove outliers (use 3 sigma bandpass)
 	for(int i = 0; i < 6; i++){
@@ -352,12 +352,12 @@ bool MPU9150::calibrate(){
 		int64_t sumSquares[3];
 		for(int j = 0; j < 32; j++){
 			getSensorState();	// Update local copies
-			sum[0] += getAccelX();
-			sum[1] += getAccelY();
-			sum[2] += getAccelZ();
-			sumSquares[0] += getAccelX() * getAccelX();
-			sumSquares[1] += getAccelY() * getAccelY();
-			sumSquares[2] += getAccelZ() * getAccelZ();
+			sum[0] += accel_X;
+			sum[1] += accel_Y;
+			sum[2] += accel_Z;
+			sumSquares[0] += accel_X * accel_X;
+			sumSquares[1] += accel_Y * accel_Y;
+			sumSquares[2] += accel_Z * accel_Z;
 		}
 		
 		// Compute variance
@@ -371,9 +371,9 @@ bool MPU9150::calibrate(){
 		int32_t diff[3];
 		for(int j = 0; j < 32; j++){
 			getSensorState();	// get next values
-			data[0] = getAccelX();
-			data[1] = getAccelY();
-			data[2] = getAccelZ();
+			data[0] = accel_X;
+			data[1] = accel_Y;
+			data[2] = accel_Z;
 			
 			// Calculate error
 			diff[0] = data[0] - sum[0];
@@ -401,8 +401,6 @@ bool MPU9150::calibrate(){
 	for(int i = 0; i < 6; i++){
 		cout << "Axis " << i << ": " << sample[i * 3 + 0] << ", " << sample[i * 3 + 1] << ", " << sample[i * 3 + 2] << endl;
 	}
-	
-	return false;
 	// Do model calibration
 	int i;
 	float eps = 0.000000001;
@@ -419,6 +417,8 @@ bool MPU9150::calibrate(){
 		
 		reset_calibration_matrices();
 	}
+	
+	return true;
 }
 
 /**
