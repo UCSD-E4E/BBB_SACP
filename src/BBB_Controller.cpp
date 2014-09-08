@@ -29,6 +29,9 @@
  * * Added stabilize state feature
  * * Note: will now use 0MQ to implement separate process control for hardware
  * * Added display setpoint feature
+ * 
+ * 9/8/14
+ * * Fixed .h to .hpp reference for quaternion library
  */
  
 
@@ -45,7 +48,7 @@
 #include <cstdio>
 #include <cstdint>
 #include <string>
-#include "quaternion.h"
+#include "quaternion.hpp"
 
 using namespace std;
 
