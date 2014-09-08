@@ -37,9 +37,9 @@ int MPU9150::initialize(){
 	beta[0] = 0;
 	beta[1] = 0;
 	beta[2] = 0;
-	beta[3] = 16384.0;
-	beta[4] = 16384.0;
-	beta[5] = 16384.0;
+	beta[3] = 1.0;
+	beta[4] = 1.0;
+	beta[5] = 1.0;
 	
 	// Open I2C bus
 	char namebuf[64];
@@ -286,15 +286,15 @@ int MPU9150::readByte(int device, uint8_t regAddr, uint8_t* value){
 }
 
 float MPU9150::getAccelX(){
-	return (accel_X + beta[0]) / beta[3] / 32767;
+	return (accel_X + beta[0]) / beta[3] / 16384;
 }
 
 float MPU9150::getAccelY(){
-	return (accel_Y + beta[1]) / beta[4] / 32767;
+	return (accel_Y + beta[1]) / beta[4] / 16384;
 }
 
 float MPU9150::getAccelZ(){
-	return (accel_Z + beta[2]) / beta[5] / 32767;
+	return (accel_Z + beta[2]) / beta[5] / 16384;
 }
 
 float MPU9150::getGyroX(){
