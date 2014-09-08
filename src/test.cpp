@@ -1,5 +1,6 @@
 #include "MPU9150.hpp"
 #include <iostream>
+#include <cmath>
 using namespace std;
 
 int main(){
@@ -16,6 +17,9 @@ int main(){
 	cout << sensor.getAccelX() << endl;
 	cout << sensor.getAccelY() << endl;
 	cout << sensor.getAccelZ() << endl;
+	float magnitude = sensor.getAccelX() * sensor.getAccelX() + sensor.getAccelY() * sensor.getAccelY() + sensor.getAccelZ() * sensor.getAccelZ();
+	magnitude = sqrt(magnitude);
+	cout << magnitude << endl;
 	
 	if(!sensor.calibrate()){
 		return 1;
@@ -24,5 +28,8 @@ int main(){
 	cout << sensor.getAccelX() << endl;
 	cout << sensor.getAccelY() << endl;
 	cout << sensor.getAccelZ() << endl;
+	magnitude = sensor.getAccelX() * sensor.getAccelX() + sensor.getAccelY() * sensor.getAccelY() + sensor.getAccelZ() * sensor.getAccelZ();
+	magnitude = sqrt(magnitude);
+	cout << magnitude << endl;
 	return 0;
 }
