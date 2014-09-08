@@ -341,8 +341,8 @@ bool MPU9150::calibrate(){
 			case 5:
 				msg = "Point upside-down";
 				break;
-			}
 		}
+		
 		cout << msg << endl;
 		cin.ignore();	// update marker to current end of buffer
 		cin.get();
