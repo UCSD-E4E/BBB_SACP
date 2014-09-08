@@ -145,6 +145,7 @@ class MPU9150{
 		void compute_calibration_matrices(int32_t data[]);
 		void update_calibration_matrices(int32_t data[]);
 		void reset_calibration_matrices();
+		void find_delta();
 	public:
 		/**
 		 * MPU9150 constructor.  Accepts for arguments the I2C bus.  Assumes
