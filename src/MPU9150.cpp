@@ -405,7 +405,7 @@ bool MPU9150::calibrate(){
 	int num_iterations = 20;
 	float change = 100.0;
 	while(--num_iterations >= 0 && change > eps){
-		compute_calibration_matrices(sample));
+		compute_calibration_matrices(sample);
 		find_delta();
 		change = delta[0] * delta[0] + delta[0] * delta[0] + delta[1] * delta[1] + delta[2] * delta[2] + delta[3] * delta[3] / (beta[3] * beta[3]) + delta[4] * delta[4] / (beta[4] * beta[4]) + delta[5] * delta[5] / (beta[5] * beta[5]);
 		
