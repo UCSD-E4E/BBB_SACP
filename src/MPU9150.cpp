@@ -34,7 +34,13 @@ using namespace std;
  */
 int MPU9150::initialize(){
 	// Initialize calibration constants
-	beta = {0, 0, 0, 16384.0, 16384.0, 16384.0};
+	beta[0] = 0;
+	beta[1] = 0;
+	beta[2] = 0;
+	beta[3] = 16384.0;
+	beta[4] = 16384.0;
+	beta[5] = 16384.0;
+	
 	// Open I2C bus
 	char namebuf[64];
 	snprintf(namebuf, sizeof(namebuf), "/dev/i2c-%d", I2CBus);
