@@ -345,7 +345,7 @@ bool MPU9150::calibrate(){
 		}
 		cout << msg << endl;
 		cin.ignore();	// update marker to current end of buffer
-		cin >> msg;	// wait for input
+		cin.get();
 	return false;
 		
 		// Establish initial boundary example
