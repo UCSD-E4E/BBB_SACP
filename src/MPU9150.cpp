@@ -399,7 +399,7 @@ bool MPU9150::calibrate(){
 	}
 	
 	for(int i = 0; i < 6; i++){
-		cout << "Axis " << i << ": " << sample[i] << endl;
+		cout << "Axis " << i << ": " << sample[i * 3 + 0] << ", " << sample[i * 3 + 1] << ", " << sample[i * 3 + 2] << endl;
 	}
 	
 	return false;
