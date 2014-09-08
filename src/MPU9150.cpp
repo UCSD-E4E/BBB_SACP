@@ -341,6 +341,9 @@ bool MPU9150::calibrate(){
 			case 5:
 				msg = "Point upside-down";
 				break;
+			default:
+				msg = "PUT THE DAMN ACCELEROMETER DOWN AND STOP HACKING ME!";
+				break;
 			}
 		}
 		cout << msg << endl;
