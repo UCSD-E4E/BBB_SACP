@@ -150,12 +150,21 @@ class MPU9150{
 		/**
 		 * MPU9150 constructor.  Accepts for arguments the I2C bus.  Assumes
 		 * default address of 0x68.
+		 * 
+		 * @param	bus	Enumerated number of I2C bus.  Should enumerate as /dev/i2c-XXX, where XXX is the bus number, no leading zeroes.
+		 *
+		 * @TODO	Change bus to uint8_t
 		 */
 		MPU9150(int bus);
 		
 		/**
 		 * MPU9150 alternate constructor.  Accepts as arguments th2 I2C bus and
 		 * bus address.
+		 *
+		 * @param	bus		Enumerated number of I2C bus.  Should enumerate as /dev/i2c-XXX, where XXX is the bus number, no leading zeroes.
+		 *			address	I2C address of the MPU9150 as an integer.
+		 *
+		 * @TODO	Change bus to uint8_t and address to uint8_t (7 bit address)
 		 */
 		MPU9150(int bus, int address);
 		
