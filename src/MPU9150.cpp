@@ -398,6 +398,10 @@ bool MPU9150::calibrate(){
 		sample[i * 3 + 2] /= 32;
 	}
 	
+	for(int i = 0; i < 6; i++){
+		cout << "Axis " << i << ": " << sample[i] << endl;
+	}
+	
 	return false;
 	// Do model calibration
 	int i;
