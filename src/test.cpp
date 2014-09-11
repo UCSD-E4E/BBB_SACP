@@ -40,7 +40,7 @@ int main(){
 		}
 		magnitude = sensor.getAccelX() * sensor.getAccelX() + sensor.getAccelY() * sensor.getAccelY() + sensor.getAccelZ() * sensor.getAccelZ();
 		magnitude = sqrt(magnitude);
-		printf("%.3f\t$.3f\t%.3f\t%.3f\n", sensor.getAccelX(), sensor.getAccelY(), sensor.getAccelZ(), magnitude);
+		printf("%.3f\t%.3f\t%.3f\t%.3f\n", sensor.getAccelX(), sensor.getAccelY(), sensor.getAccelZ(), magnitude);
 	}
 	return 0;
 }

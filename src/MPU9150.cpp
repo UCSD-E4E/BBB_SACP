@@ -412,7 +412,7 @@ bool MPU9150::calibrate(){
 	// Do model calibration
 	int i;
 	float eps = 0.000000001;
-	int num_iterations = 20;
+	int num_iterations = 200;
 	float change = 100.0;
 	while(--num_iterations >= 0 && change > eps){
 		compute_calibration_matrices(sample);
