@@ -76,11 +76,11 @@ int MPU9150::initialize(){
 	
 	// configure device
 	// set gyro to +/- 250 deg/sec
-	if((result = writeBits(mpuFile, MPU9150_GYRO_CONFIG, ~(0x03 << 3), 0x18))){
+	if((result = writeBits(mpuFile, MPU9150_GYRO_CONFIG, 0x00, 0x18))){
 		return result;
 	}
 	// set accel to +/- 2g
-	if((result = writeBits(mpuFile, MPU9150_ACCEL_CONFIG, ~(0x03 << 3), 0x18))){
+	if((result = writeBits(mpuFile, MPU9150_ACCEL_CONFIG, 0x00, 0x18))){
 		return result;
 	}
 	
