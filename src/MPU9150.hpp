@@ -125,7 +125,6 @@
 class MPU9150{
 	private:
 		uint8_t I2CBus, I2CAddress;
-		int mpuFile, magFile;
 		// TODO: make all data part of arrays
 		int16_t accel_X, accel_Y, accel_Z;
 		int16_t temp;
@@ -144,6 +143,7 @@ class MPU9150{
 		void reset_calibration_matrices();
 		void find_delta();
 	public:
+		int mpuFile, magFile;
 		int writeByte(int device, uint8_t regAddr, uint8_t value);
 		int writeBits(int device, uint8_t regAddr, uint8_t value, uint8_t bitmask);
 		int readByte(int device, uint8_t regAddr, uint8_t* value);
