@@ -11,36 +11,22 @@ int main(){
 		cout << "Initialization Failed!" << endl;
 		return result;
 	}
-	if((result = sensor.getSensorState())){
-		cout << "Sensor Data Retrieval Failed!" << endl;
-		return result;
-	}
-	cout << sensor.getAccelX() << endl;
-	cout << sensor.getAccelY() << endl;
-	cout << sensor.getAccelZ() << endl;
-	float magnitude = sensor.getAccelX() * sensor.getAccelX() + sensor.getAccelY() * sensor.getAccelY() + sensor.getAccelZ() * sensor.getAccelZ();
-	magnitude = sqrt(magnitude);
-	cout << magnitude << endl;
 	
-	// if(!sensor.calibrate()){
-		// return 1;
-	// }
-	// sensor.getSensorState();
-	// cout << sensor.getAccelX() << endl;
-	// cout << sensor.getAccelY() << endl;
-	// cout << sensor.getAccelZ() << endl;
-	// magnitude = sensor.getAccelX() * sensor.getAccelX() + sensor.getAccelY() * sensor.getAccelY() + sensor.getAccelZ() * sensor.getAccelZ();
-	// magnitude = sqrt(magnitude);
-	// cout << magnitude << endl;
+	// Z Self Test
+	// Register 28, bit 5
+	// Register 15[5-7], 16[0-1]
+	// Result is equal to enabled output - disabled output
+	// enabled result stored in 59-64
+	// Set to 8g
 	
-	// Print out sensor data
-	while(1){
-		if(sensor.getSensorState()){
-			return 1;
-		}
-		magnitude = sensor.getAccelX() * sensor.getAccelX() + sensor.getAccelY() * sensor.getAccelY() + sensor.getAccelZ() * sensor.getAccelZ();
-		magnitude = sqrt(magnitude);
-		printf("%.3f\t%.3f\t%.3f\t%.3f\n", sensor.getAccelX(), sensor.getAccelY(), sensor.getAccelZ(), magnitude);
-	}
+	sensor.writeByte(mpuFile, MPU9150_ACCEL_CONFIG, (2 << 3) | (1 << 5));	// set 8g and z self test
+	// Get self test result
+	uint8_t result = 0;
+	readByte(mpuFile, MPU9150_SELF_TEST_Z, &result);
+	uint8_t self_Test_Z = (result | 0xE0) >> 3;
+	readByte(mpuFile, MPU9150_SELF_TEST_A, &result);
+	self_Test_Z |= (result | 0x03);
+	cout << self_Test_Z;
+	
 	return 0;
 }
