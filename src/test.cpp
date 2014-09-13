@@ -19,14 +19,14 @@ int main(){
 	// enabled result stored in 59-64
 	// Set to 8g
 	
-	sensor.writeByte(mpuFile, MPU9150_ACCEL_CONFIG, (2 << 3) | (1 << 5));	// set 8g and z self test
+	sensor.writeByte(sensor.mpuFile, MPU9150_ACCEL_CONFIG, (2 << 3) | (1 << 5));	// set 8g and z self test
 	// Get self test result
-	uint8_t result = 0;
-	readByte(mpuFile, MPU9150_SELF_TEST_Z, &result);
-	uint8_t self_Test_Z = (result | 0xE0) >> 3;
-	readByte(mpuFile, MPU9150_SELF_TEST_A, &result);
-	self_Test_Z |= (result | 0x03);
-	cout << self_Test_Z;
+	uint8_t result1 = 0;
+	sensor.readByte(sensor.mpuFile, MPU9150_SELF_TEST_Z, &result1);
+	uint8_t self_Test_Z = (result1 | 0xE0) >> 3;
+	sensor.readByte(sensor.mpuFile, MPU9150_SELF_TEST_A, &result1);
+	self_Test_Z |= (result1 | 0x03);
+	printf("%d\n", self_Test_Z);
 	
 	return 0;
 }
