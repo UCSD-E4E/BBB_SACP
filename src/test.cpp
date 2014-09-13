@@ -23,10 +23,19 @@ int main(){
 	// Get self test result
 	uint8_t result1 = 0;
 	sensor.readByte(sensor.mpuFile, MPU9150_SELF_TEST_Z, &result1);
-	uint8_t self_Test_Z = (result1 | 0xE0) >> 3;
+	uint8_t self_Test_Z1 = (result1 | 0xE0) >> 3;
 	sensor.readByte(sensor.mpuFile, MPU9150_SELF_TEST_A, &result1);
-	self_Test_Z |= (result1 | 0x03);
+	self_Test_Z1 |= (result1 | 0x03);
 	printf("%d\n", self_Test_Z);
+	
+	// disable self test
+	sensor.writeByte(sensor.mpuFile, MPU9150_ACCEL_CONFIG, (2 << 3));
+	sensor.readByte(sensor.mpuFile, MPU9150_ACCEL_ZOUT_H, &result1);
+	int16_t zOutput = result1 << 8;
+	sensor.readByte(sensor.mpuFile, MPU9150_ACCEL_ZOUT_L, &result1);
+	zOutput |= result1;
+	printf("%d\n", zOutput);
+	printf("%d\n", self_Test_Z - zOutput);
 	
 	return 0;
 }
