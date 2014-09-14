@@ -15,3 +15,10 @@ This software directly requires the following libraries:
 
 * libzmq (0MQ)
 
+## Topology
+
+BBB_SACP consists of two distinct processes: the control process and the UI process.  The control process is responsible for managing the sensor, servos, and control loops, and provides a socket interface to control setpoint, stabilization mode, and tracking mode.  The UI process is responsible for managing the translation from user bump commands to a setpoint for the gimbal.
+
+The two processes will be linked using two links: a control link and a data link.  The control link will be a ZMQ REQ-REP socket pair, with the UI having the REQ socket and the controller having the REP socket.  The UI sends a message to the controller requesting the controller to set a new setpoint or control mode, and the controller replies with a message when the gimbal has reached the setpoint, or when the controller has determined that the gimbal has failed.  The data link will consist of a ZMQ PUB-SUB socket pair.  The controller will constantly publish a data structure denoting its current state (orientation, geolocation, state) for the controller to accept and use at will.  This also allows for other programs to listen and process the data for other operations, such as monitoring coverage.
+
+NOTE: The data link may eventually be replaced with a MAVlink stream, or be wrapped with a MAVlink stream to enable control using MissionPlanner or QGroundControl.  This functionality may also be implemented as a UI proxy.
