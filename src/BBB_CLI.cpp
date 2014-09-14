@@ -49,6 +49,7 @@
 #include <cstdint>
 #include <string>
 #include "quaternion.hpp"
+#include <zmq.hpp>
 
 using namespace std;
 
@@ -65,13 +66,79 @@ void printHelp();
 void printQuaternion(Quaternion <float> q);
 
 int main(int argc, char** argv){
+	int rc = 0;
 	cout << "Project Spectre BeagleBone Black\n";
 	cout << "Version: " << VERSION << endl;
 	
 	cout << endl << "Initializing..." << endl;
 
 	setPoint = Quaternion <float> (1, 0, 0, 0);
-	// fork and exec hardware controller
+	// set up communications
+	zmq::context_t control_Context(1);
+	zmq::socket_t control_Socket(control_Context, ZMQ_REQ);
+	if(control_Socket.bind("tcp://*:53679")){
+		switch(errno){
+			case EINVAL:
+				cerr << "tcp://*:53679 invalid!  Exiting..." << endl;
+				break;
+			case ENODEV:
+				cerr << "tcp://*:53679 interface not available!  Exiting..." 
+					<< endl;
+				break;
+			case ENOSOCK:
+				cerr << "tcp://*:53679 socket not available!  Exiting..." <<
+					endl;
+				break;
+			case EMTHREAD:
+				cerr << "No I/O thread for ZMQ sockets!  Exiting..." << endl;
+				break;
+			case EPROTONOSUPPORT:
+			case ENOCOMPATPROTO:
+			case EADDRINUSE:
+			case EADDRNOTAVAL:
+			case ETERM:
+				cerr << "Stupid programmer!" << endl;
+				break;
+			defualt:
+				cerr << "ZMQ is broken!!!  Crashing!!!" << endl;
+				break;
+		}
+		exit(1);
+	}
+
+
+
+	zmq::context_t data_Context(1);
+	zmq::socket_t data_Socket(data_Context, ZMQ_SUB);
+	if(data_Socket.bind("tcp://eth0:53680")){
+		switch(errno){
+			case EINVAL:
+				cerr << "tcp://eth0:53680 invalid!  Exiting..." << endl;
+				break;
+			case ENODEV:
+				cerr << "tcp://eth0:53680 interface not available!  Exiting..."
+					<< endl;
+				break;
+			case ENOSOCK:
+				cerr << "tcp://eth0:53680 socket not available!  Exiting..." <<
+					endl;
+				break;
+			case EMTHREAD:
+				cerr << "No I/O thread for ZMQ socket!  Exiting..." << endl;
+				break;
+			case EPROTONOSUPPORT:
+			case ENOCOMPATPROTO:
+			case EADDRINUSE:
+			case EADDRNOTVAL:
+			case ETERM:
+				cerr << "Stupid programmer!" << endl;
+				break;
+			default:
+				cerr << "ZMQ is broken!!  Crashing!!!" << endl;
+				break;
+		}
+		exit(1);
+	}
 
 	cout << "Initialized" << endl;
 	
