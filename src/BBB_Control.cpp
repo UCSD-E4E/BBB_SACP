@@ -35,10 +35,11 @@ int main(int argc, char** argv){
 	if((result = getSensorState())){
 		return 1;
 	}
-
+	// TODO: enable and configure FIFO
 
 	// Set up stabilization
 	setPoint = Quaternion <float> (1, 0, 0, 0);
+	// TODO: enable and configure interrupt driven sensor update
 
 	// Begin doing stuff
 	while(1){
@@ -53,6 +54,10 @@ int main(int argc, char** argv){
 		}
 		// No command, continue
 
+		// Check for sensor update
+		
+		// Update setPoint
 
+		// Publish data
 	}
 }
