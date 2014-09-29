@@ -1,0 +1,42 @@
+g++ ./src/test.cpp ./src/MPU9150.cpp -o ./build/test -std=gnu++0x -g -Wall
+./build/test
+Point flat
+Calibrate: Beginning calibration
+Calibrate: Getting initial samples...Data	-120	-4164	15504
+Data	-300	-4236	15364
+Data	-268	-4248	15288
+Data	-196	-4184	15260
+Data	96	-4156	15384
+Data	-232	-4136	15236
+Data	-300	-4156	15428
+Data	-240	-4296	15284
+Data	-68	-4196	15284
+Data	-208	-4208	15480
+Data	-176	-4028	15400
+Data	-120	-4156	15320
+Data	-256	-4160	15348
+Data	-284	-4292	15120
+Data	-300	-4256	15144
+Data	-176	-4120	15540
+Data	-48	-4164	15512
+Data	-100	-4212	15500
+Data	-208	-4252	15200
+Data	-164	-4212	15464
+Data	-84	-4140	15424
+Data	-96	-4084	15484
+Data	-312	-4180	15540
+Data	-280	-4176	15336
+Data	-244	-4136	15264
+Data	-204	-4144	15424
+Data	-172	-4148	15448
+Data	-84	-4248	15144
+Data	-100	-4180	15412
+Data	-408	-4228	15368
+Data	-76	-4092	15372
+Data	-132	-4284	15472
+done
+Calibrate: Computing variance...variance[0] = 10141
+variance[1] = 3727
+variance[2] = 13611
+done
+Calibrate: Gathering calibration data...
