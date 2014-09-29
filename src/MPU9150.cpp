@@ -16,9 +16,11 @@
 #include <cstdint>
 #include <cinttypes>
 #include <assert.h>
+#include <cmath>
 using namespace std;
 
 // defines
+#define MAGNITUDE_SCALE 8.36464e6
 
 // Function Implementations
 /**
@@ -35,12 +37,12 @@ using namespace std;
  */
 int MPU9150::initialize(){
 	// Initialize calibration constants
-	beta[0] = 0;
-	beta[1] = 0;
-	beta[2] = 0;
-	beta[3] = 1.0;
-	beta[4] = 1.0;
-	beta[5] = 1.0;
+	beta[0] = -0.647588;
+	beta[1] = -2.56522;
+	beta[2] = -8.75232;
+	beta[3] = 0.00194947;
+	beta[4] = 0.00196017;
+	beta[5] = 0.00193022;
 	
 	// Open I2C bus
 	char namebuf[64];
@@ -287,15 +289,15 @@ int MPU9150::readByte(int device, uint8_t regAddr, uint8_t* value){
 }
 
 float MPU9150::getAccelX(){
-	return (accel_X + beta[0]) / beta[3] / 16384;
+	return (accel_X + beta[0]) / beta[3] / MAGNITUDE_SCALE;
 }
 
 float MPU9150::getAccelY(){
-	return (accel_Y + beta[1]) / beta[4] / 16384;
+	return (accel_Y + beta[1]) / beta[4] / MAGNITUDE_SCALE;
 }
 
 float MPU9150::getAccelZ(){
-	return (accel_Z + beta[2]) / beta[5] / 16384;
+	return (accel_Z + beta[2]) / beta[5] / MAGNITUDE_SCALE;
 }
 
 float MPU9150::getGyroX(){
@@ -353,7 +355,7 @@ bool MPU9150::calibrate(){
 		}
 		
 		cout << msg << endl;
-		//cin.get();
+		cin.get();
 
 		cout << "Calibrate: Beginning calibration" << endl;	
 		// Establish initial boundary example
@@ -364,7 +366,6 @@ bool MPU9150::calibrate(){
 		int16_t initialVector[3] = {accel_X, accel_Y, accel_Z};
 		for(int j = 0; j < 32; j++){
 			getSensorState();	// Update local copies
-			cout << "Data\t" << accel_X << "\t" << accel_Y << "\t" << accel_Z << endl;
 			sum[0] += accel_X - initialVector[0];
 			sum[1] += accel_Y - initialVector[1];
 			sum[2] += accel_Z - initialVector[2];
@@ -379,7 +380,6 @@ bool MPU9150::calibrate(){
 		int64_t variance[3];
 		for(int j = 0; j < 3; j++){
 			variance[j] = sumSquares[j] - (sum[j] * sum[j]) / 32;
-			cout << "variance[" << j << "] = " << variance[j]/32 << endl;
 		}
 		cout << "done" << endl;
 		
@@ -396,20 +396,19 @@ bool MPU9150::calibrate(){
 			data[2] = accel_Z;
 			
 			// Calculate error
-			diff[0] = data[0] - sum[0];
-			diff[1] = data[1] - sum[1];
-			diff[2] = data[2] - sum[2];
+			diff[0] = data[0] * 32 - sum[0];
+			diff[1] = data[1] * 32 - sum[1];
+			diff[2] = data[2] * 32 - sum[2];
 			
 			// Compare variance
-			if((diff[0] * diff[0]) / 32 < 9 * variance[0] &&
-					(diff[1] * diff[1]) / 32 < 9 * variance[1] &&
-					(diff[2] * diff[2]) / 32 < 9 * variance[2]){
+			if((diff[0] * diff[0]) / 1024 < 9 * variance[0] &&
+					(diff[1] * diff[1]) / 1024 < 9 * variance[1] &&
+					(diff[2] * diff[2]) / 1024 < 9 * variance[2]){
 				sample[i * 3 + 0] += data[0];
 				sample[i * 3 + 1] += data[1];
 				sample[i * 3 + 2] += data[2];
 			}else{
 				j--;
-				cerr << "Calibrate: ERROR IN SAMPLE!" << endl;
 				assert(tryCounter - j < 32);
 				continue;
 			}
@@ -420,16 +419,14 @@ bool MPU9150::calibrate(){
 		sample[i * 3 + 2] /= 32;
 	}
 	
-	for(int i = 0; i < 6; i++){
-		cout << "Axis " << i << ": " << sample[i * 3 + 0] << ", " << sample[i * 3 + 1] << ", " << sample[i * 3 + 2] << endl;
-	}
 	// Do model calibration
 	cout << "Calibrate: Beginning model calibration..." << flush;
 	int i;
-	float eps = 0.000000001;
-	int num_iterations = 200;
+	float eps = 0.00000001;
+	int num_iterations = 500;
 	float change = 100.0;
-	while(--num_iterations >= 0 && change > eps){
+	int continueConst = 1;
+	while(change > eps){
 		compute_calibration_matrices(sample);
 		find_delta();
 		change = delta[0] * delta[0] + delta[0] * delta[0] + delta[1] * delta[1] + delta[2] * delta[2] + delta[3] * delta[3] / (beta[3] * beta[3]) + delta[4] * delta[4] / (beta[4] * beta[4]) + delta[5] * delta[5] / (beta[5] * beta[5]);
@@ -441,6 +438,9 @@ bool MPU9150::calibrate(){
 		reset_calibration_matrices();
 	}
 	cout << "done" << endl;
+	for(int i = 0; i < 6; i++){
+		cout << "beta[" << i << "]: " << beta[i] << endl;
+	}
 	return true;
 }
 
@@ -500,7 +500,7 @@ void MPU9150::find_delta(){
 	for(i = 0; i < 6; i++){
 		for(j = i + 1; j < 6; j ++){
 			mu = JS[i][j] / JS[i][i];
-			if(mu != 0){
+			if(mu != 0.0){
 				dS[j] -= mu * dS[i];
 				for(k = j; k < 6; k++){
 					JS[k][j] -= mu * JS[k][i];
