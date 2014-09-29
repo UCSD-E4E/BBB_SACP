@@ -12,7 +12,7 @@ using namespace std;
 // Defines
 
 // Global Variables
-
+Quaternion <float> setPoint;
 
 int main(int argc, char** argv){
 	// Set up communications
@@ -35,12 +35,29 @@ int main(int argc, char** argv){
 	if((result = getSensorState())){
 		return 1;
 	}
-
+	// TODO: enable and configure FIFO
 
 	// Set up stabilization
+	setPoint = Quaternion <float> (1, 0, 0, 0);
+	// TODO: enable and configure interrupt driven sensor update
 
 	// Begin doing stuff
 	while(1){
+		zmq::message_t command ();
+		result = zmq_msg_init(&command);
+		assert(result == 0);
+		result = zmq_recv(&data_Socket, &command, ZMQ_NOBLOCK);
+		if(!(result == -1 && errno == EAGAIN) || (result >= 0)){
+			assert(result == 0);
+		}else if(result >= 0){
+			// handle command
+		}
+		// No command, continue
 
+		// Check for sensor update
+		
+		// Update setPoint
+
+		// Publish data
 	}
 }
