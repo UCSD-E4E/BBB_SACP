@@ -15,6 +15,7 @@
 #include <cstdlib>
 #include <cstdint>
 #include <cinttypes>
+#include <assert.h>
 using namespace std;
 
 // defines
@@ -352,32 +353,43 @@ bool MPU9150::calibrate(){
 		}
 		
 		cout << msg << endl;
-		cin.ignore();	// update marker to current end of buffer
-		cin.get();
-		
+		//cin.get();
+
+		cout << "Calibrate: Beginning calibration" << endl;	
 		// Establish initial boundary example
-		int32_t sum[3];
-		int64_t sumSquares[3];
+		int32_t sum[3] = {0};
+		int64_t sumSquares[3] = {0};
+		cout << "Calibrate: Getting initial samples..." << flush;
+		getSensorState();
+		int16_t initialVector[3] = {accel_X, accel_Y, accel_Z};
 		for(int j = 0; j < 32; j++){
 			getSensorState();	// Update local copies
-			sum[0] += accel_X;
-			sum[1] += accel_Y;
-			sum[2] += accel_Z;
-			sumSquares[0] += accel_X * accel_X;
-			sumSquares[1] += accel_Y * accel_Y;
-			sumSquares[2] += accel_Z * accel_Z;
+			cout << "Data\t" << accel_X << "\t" << accel_Y << "\t" << accel_Z << endl;
+			sum[0] += accel_X - initialVector[0];
+			sum[1] += accel_Y - initialVector[1];
+			sum[2] += accel_Z - initialVector[2];
+			sumSquares[0] += (accel_X - initialVector[0]) * (accel_X - initialVector[0]);
+			sumSquares[1] += (accel_Y - initialVector[1]) * (accel_Y - initialVector[1]);
+			sumSquares[2] += (accel_Z - initialVector[2]) * (accel_Z - initialVector[2]);
 		}
+		cout << "done" << endl;
 		
 		// Compute variance
+		cout << "Calibrate: Computing variance..." << flush;
 		int64_t variance[3];
 		for(int j = 0; j < 3; j++){
-			variance[j] = 1 + sumSquares[j] - (sum[j] * sum[j]) / 32;
+			variance[j] = sumSquares[j] - (sum[j] * sum[j]) / 32;
+			cout << "variance[" << j << "] = " << variance[j]/32 << endl;
 		}
+		cout << "done" << endl;
 		
 		// Gather data
+		cout << "Calibrate: Gathering calibration data..." << flush;
 		int16_t data[3];
 		int32_t diff[3];
+		int tryCounter = 0;
 		for(int j = 0; j < 32; j++){
+			tryCounter++;
 			getSensorState();	// get next values
 			data[0] = accel_X;
 			data[1] = accel_Y;
@@ -397,10 +409,12 @@ bool MPU9150::calibrate(){
 				sample[i * 3 + 2] += data[2];
 			}else{
 				j--;
+				cerr << "Calibrate: ERROR IN SAMPLE!" << endl;
+				assert(tryCounter - j < 32);
 				continue;
 			}
 		}
-		
+		cout << "done" << endl;
 		sample[i * 3 + 0] /= 32;
 		sample[i * 3 + 1] /= 32;
 		sample[i * 3 + 2] /= 32;
@@ -410,6 +424,7 @@ bool MPU9150::calibrate(){
 		cout << "Axis " << i << ": " << sample[i * 3 + 0] << ", " << sample[i * 3 + 1] << ", " << sample[i * 3 + 2] << endl;
 	}
 	// Do model calibration
+	cout << "Calibrate: Beginning model calibration..." << flush;
 	int i;
 	float eps = 0.000000001;
 	int num_iterations = 200;
@@ -425,6 +440,7 @@ bool MPU9150::calibrate(){
 		
 		reset_calibration_matrices();
 	}
+	cout << "done" << endl;
 	return true;
 }
 
