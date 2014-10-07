@@ -48,7 +48,7 @@
 #include <cstdio>
 #include <cstdint>
 #include <string>
-#include "quaternion.hpp"
+#include <quaternion.hpp>
 #include <zmq.hpp>
 
 using namespace std;
@@ -76,69 +76,11 @@ int main(int argc, char** argv){
 	// set up communications
 	zmq::context_t control_Context(1);
 	zmq::socket_t control_Socket(control_Context, ZMQ_REQ);
-	if(control_Socket.bind("tcp://*:53679")){
-		switch(errno){
-			case EINVAL:
-				cerr << "tcp://*:53679 invalid!  Exiting..." << endl;
-				break;
-			case ENODEV:
-				cerr << "tcp://*:53679 interface not available!  Exiting..." 
-					<< endl;
-				break;
-			case ENOSOCK:
-				cerr << "tcp://*:53679 socket not available!  Exiting..." <<
-					endl;
-				break;
-			case EMTHREAD:
-				cerr << "No I/O thread for ZMQ sockets!  Exiting..." << endl;
-				break;
-			case EPROTONOSUPPORT:
-			case ENOCOMPATPROTO:
-			case EADDRINUSE:
-			case EADDRNOTAVAL:
-			case ETERM:
-				cerr << "Stupid programmer!" << endl;
-				break;
-			defualt:
-				cerr << "ZMQ is broken!!!  Crashing!!!" << endl;
-				break;
-		}
-		exit(1);
-	}
-
-
+	control_Socket.connect("tcp://127.0.0.1:53679");
 
 	zmq::context_t data_Context(1);
 	zmq::socket_t data_Socket(data_Context, ZMQ_SUB);
-	if(data_Socket.bind("tcp://eth0:53680")){
-		switch(errno){
-			case EINVAL:
-				cerr << "tcp://eth0:53680 invalid!  Exiting..." << endl;
-				break;
-			case ENODEV:
-				cerr << "tcp://eth0:53680 interface not available!  Exiting..."
-					<< endl;
-				break;
-			case ENOSOCK:
-				cerr << "tcp://eth0:53680 socket not available!  Exiting..." <<
-					endl;
-				break;
-			case EMTHREAD:
-				cerr << "No I/O thread for ZMQ socket!  Exiting..." << endl;
-				break;
-			case EPROTONOSUPPORT:
-			case ENOCOMPATPROTO:
-			case EADDRINUSE:
-			case EADDRNOTVAL:
-			case ETERM:
-				cerr << "Stupid programmer!" << endl;
-				break;
-			default:
-				cerr << "ZMQ is broken!!  Crashing!!!" << endl;
-				break;
-		}
-		exit(1);
-	}
+	data_Socket.connect("tcp://127.0.0.1:53680");
 
 	cout << "Initialized" << endl;
 	
