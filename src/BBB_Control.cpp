@@ -75,12 +75,12 @@ int main(int argc, char** argv){
 			std::istringstream iss(static_cast <char*> (command.data()));
 			string cmd;
 			iss >> cmd;
-			if(cmd.compare("SETPOINT")){
+			if(!cmd.compare("SETPOINT")){
 				float setQuat[4];
 				iss >> setQuat[0] >> setQuat[1] >> setQuat[2] >> setQuat[3];
 				setPoint = Quaternion<float>(setQuat);
 				cout << "Have setpoing!" << endl;
-			}else if(cmd.compare("STABILIZATION")){
+			}else if(!cmd.compare("STABILIZATION")){
 				iss >> _stabilization;
 //				cout << "Have stabilize command!" << endl;
 			}
