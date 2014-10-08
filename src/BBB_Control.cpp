@@ -28,15 +28,15 @@ int main(int argc, char** argv){
 	cout << "Initializing..." << flush;
 	zmq::context_t control_Context (1);
 	zmq::socket_t control_Socket (control_Context, ZMQ_REP);
-	control_Socket.bind("tcp://127.0.0.1:53679");
+	control_Socket.bind("tcp://127.0.0.1:55000");
 
 	zmq::context_t data_Context (1);
 	zmq::socket_t data_Socket (data_Context, ZMQ_PUB);
-	data_Socket.bind("tcp://127.0.0.1:53680");
+	data_Socket.bind("tcp://127.0.0.1:55002");
 
 	zmq::context_t sensor_Context (1);
 	zmq::socket_t sensor_Socket(sensor_Context, ZMQ_SUB);
-	sensor_Socket.connect("tcp://127.0.0.1:53681");
+	sensor_Socket.connect("tcp://127.0.0.1:55004");
 	cout << "done." << endl;
 
 	// Set up sensors
@@ -66,7 +66,8 @@ int main(int argc, char** argv){
 
 	// Begin doing stuff
 	cout << "Beginning control loops:" << endl;
-	while(1){
+	bool runState = true;
+	while(runState){
 		zmq::message_t command;
 //		cout << "Checking for command..." << flush;
 		if(control_Socket.recv(&command, ZMQ_NOBLOCK)){
@@ -75,6 +76,7 @@ int main(int argc, char** argv){
 			std::istringstream iss(static_cast <char*> (command.data()));
 			string cmd;
 			iss >> cmd;
+			cmd = cmd.substr(0, command.size());
 			if(!cmd.compare("SETPOINT")){
 				float setQuat[4];
 				iss >> setQuat[0] >> setQuat[1] >> setQuat[2] >> setQuat[3];
@@ -83,6 +85,16 @@ int main(int argc, char** argv){
 			}else if(!cmd.compare("STABILIZATION")){
 				iss >> _stabilization;
 //				cout << "Have stabilize command!" << endl;
+			}else if(!cmd.compare("exit")){
+				runState = false;
+				cout << "Exiting now!" << endl;
+			}
+			// Received command, reply
+			cmd = "done";
+			command.rebuild(4);
+			memcpy((void*)command.data(), cmd.c_str(), cmd.size());
+			if(!control_Socket.send(&command){){
+				abort();
 			}
 		}else{
 //			cout << "no command." << endl;
