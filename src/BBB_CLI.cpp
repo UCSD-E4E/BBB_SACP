@@ -76,11 +76,11 @@ int main(int argc, char** argv){
 	// set up communications
 	zmq::context_t control_Context(1);
 	zmq::socket_t control_Socket(control_Context, ZMQ_REQ);
-	control_Socket.connect("tcp://127.0.0.1:53679");
+	control_Socket.connect("tcp://127.0.0.1:55000");
 
 	zmq::context_t data_Context(1);
 	zmq::socket_t data_Socket(data_Context, ZMQ_SUB);
-	data_Socket.connect("tcp://127.0.0.1:53680");
+	data_Socket.connect("tcp://127.0.0.1:55002");
 
 	cout << "Initialized" << endl;
 	
@@ -192,6 +192,11 @@ int main(int argc, char** argv){
 			cout << "Improper usage!" << endl;
 			printHelp();
 		}
+		// Send command;
+		zmq::message_t control_Msg;
+		memcpy((void*)control_Msg.data(), cmd.c_str(), cmd.size());
+		control_Socket.send(control_Msg);
+		control_Socket.recv(&control_Msg);
 		if(displayAngle){
 			printQuaternion(setPoint);
 		}
