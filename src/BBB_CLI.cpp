@@ -209,6 +209,7 @@ int main(int argc, char** argv){
 		}
 		// Send command;
 		zmq::message_t control_Msg;
+		control_Msg.rebuild(sendCmd.size());
 		cout << sendCmd << endl;
 		memcpy((void*)control_Msg.data(), sendCmd.c_str(), sendCmd.size());
 		control_Socket.send(control_Msg);
