@@ -85,6 +85,7 @@ int main(int argc, char** argv){
 	cout << "Initialized" << endl;
 	
 	std::string cmd("");
+	string sendCmd;
 	uint8_t runState = true;
 	uint8_t goodCmd = false;
 	while(runState){
@@ -96,36 +97,43 @@ int main(int argc, char** argv){
 			goodCmd = true;
 			cout << "Exiting..." << endl;
 			runState = false;
+			sendCmd = "exit";
 		}
 		if(!cmd.compare("w")){	// compare to "w"
 			goodCmd = true;
 			// bump absolute pitch setpoint 5 degrees up
 			setPoint = PITCH_BUMP * setPoint;
+			sendCmd = "newSetpt";
 		}
 		if(!cmd.compare("s")){	// compare to "s"
 			goodCmd = true;
 			// bump absolute pitch setpoint 5 degrees down
 			setPoint = PITCH_BUMP.inverse() * setPoint;
+			sendCmd = "newSetpt";
 		}
 		if(!cmd.compare("d")){	// compare to "a"
 			goodCmd = true;
 			// bump absolute yaw setpoint 5 degrees left
 			setPoint = YAW_BUMP * setPoint;
+			sendCmd = "newSetpt";
 		}
 		if(!cmd.compare("a")){	// compare to "d"
 			goodCmd = true;
 			// bump absolute yaw setpoint 5 degrees right
 			setPoint = YAW_BUMP.inverse() * setPoint;
+			sendCmd = "newSetpt";
 		}
 		if(!cmd.compare("e")){	// compare to "q"
 			goodCmd = true;
 			// bump absolute roll setpoint 5 degrees left
 			setPoint = ROLL_BUMP * setPoint;
+			sendCmd = "newSetpt";
 		}
 		if(!cmd.compare("q")){	// compare to "e"
 			goodCmd = true;
 			// bump absolute roll setpoint 5 degrees right
 			setPoint = ROLL_BUMP.inverse() * setPoint;
+			sendCmd = "newSetPt";
 		}
 		if(!cmd.compare("stabilize")){	// compare to "stabilize"
 			goodCmd = true;
@@ -142,6 +150,7 @@ int main(int argc, char** argv){
 				cout << "Improper usage!" << endl;
 				printHelp();
 			}
+			sendCmd = "stabilize";
 		}
 		if(!cmd.compare("control")){	// compare to "control"
 			goodCmd = true;
@@ -160,6 +169,7 @@ int main(int argc, char** argv){
 				cout << "Improper usage!" << endl;
 				printHelp();
 			}
+			sendCmd = "nop";
 		}
 		if(!cmd.compare("reset")){	// compare to "reset"
 			goodCmd = true;
@@ -167,14 +177,17 @@ int main(int argc, char** argv){
 			YAW_BUMP = Quaternion <float> (R_FIVE_DEG, 0, 0, I_FIVE_DEG);
 			ROLL_BUMP = Quaternion <float> (R_FIVE_DEG, I_FIVE_DEG, 0, 0);
 			PITCH_BUMP = Quaternion <float> (R_FIVE_DEG, 0, I_FIVE_DEG, 0);
+			sendCmd = "newSetPt";
 		}
 		if(!cmd.compare("help") || !cmd.compare("?")){	// compare to "help"
 			goodCmd = true;
 			printHelp();
+			sendCmd = "nop";
 		}
 		if(!cmd.compare("getAngle")){
 			goodCmd = true;
 			printQuaternion(setPoint);
+			sendCmd = "nop";
 		}
 		if(!cmd.compare("displayAngle")){	// compare to "displayAngle"
 			goodCmd = true;
@@ -187,14 +200,17 @@ int main(int argc, char** argv){
 				cout << "Improper usage!" << endl;
 				printHelp();
 			}
+			sendCmd = "nop";
 		}
 		if(!goodCmd){
 			cout << "Improper usage!" << endl;
 			printHelp();
+			sendCmd = "nop";
 		}
 		// Send command;
 		zmq::message_t control_Msg;
-		memcpy((void*)control_Msg.data(), cmd.c_str(), cmd.size());
+		cout << sendCmd << endl;
+		memcpy((void*)control_Msg.data(), sendCmd.c_str(), sendCmd.size());
 		control_Socket.send(control_Msg);
 		control_Socket.recv(&control_Msg);
 		if(displayAngle){
