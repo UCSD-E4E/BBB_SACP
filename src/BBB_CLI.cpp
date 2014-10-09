@@ -33,7 +33,7 @@
  * 9/8/14
  * * Fixed .h to .hpp reference for quaternion library
  */
- 
+
 
 // Defines
 #define VERSION 	0.0
@@ -50,6 +50,7 @@
 #include <string>
 #include <quaternion.hpp>
 #include <zmq.hpp>
+#include <sstream>
 
 using namespace std;
 
@@ -69,7 +70,7 @@ int main(int argc, char** argv){
 	int rc = 0;
 	cout << "Project Spectre BeagleBone Black\n";
 	cout << "Version: " << VERSION << endl;
-	
+
 	cout << endl << "Initializing..." << endl;
 
 	setPoint = Quaternion <float> (1, 0, 0, 0);
@@ -83,7 +84,7 @@ int main(int argc, char** argv){
 	data_Socket.connect("tcp://127.0.0.1:55002");
 
 	cout << "Initialized" << endl;
-	
+
 	std::string cmd("");
 	string sendCmd;
 	uint8_t runState = true;
@@ -208,18 +209,23 @@ int main(int argc, char** argv){
 			sendCmd = "nop";
 		}
 		// Send command;
-		zmq::message_t control_Msg;
-		control_Msg.rebuild(sendCmd.size());
-		cout << sendCmd << endl;
-		memcpy((void*)control_Msg.data(), sendCmd.c_str(), sendCmd.size());
-		control_Socket.send(control_Msg);
-		control_Socket.recv(&control_Msg);
+		if(!sendCmd.compare("newSetpt")){
+			stringstream ss;
+			float quatVals[4];
+			setPoint.getValues(quatVals);
+			ss << "SETPOINT " << quatVals[0] << " " << quatVals[1] << " " << quatVals[2] << " " << quatVals[3];
+			sendCmd = ss.str();
+		}
+		if(sendCmd.compare("nop")){
+			zmq::message_t control_Msg;
+			control_Msg.rebuild(sendCmd.size());
+			memcpy((void*)control_Msg.data(), sendCmd.c_str(), sendCmd.size());
+			control_Socket.send(control_Msg);
+			control_Socket.recv(&control_Msg);
+		}
 		if(displayAngle){
 			printQuaternion(setPoint);
 		}
-		// Get IMU State
-		// Calculate error
-		// Implement correction
 	}
 	return 0;
 }
@@ -266,7 +272,7 @@ void printQuaternion(Quaternion <float> q){
 	cout << ", ";
 	printf("%.3f", quatVals[3]);
 	cout << "))\t";
-	
+
 	float eulerAngles[3];
 	q.toEuler(eulerAngles);
 	cout << "A: (";

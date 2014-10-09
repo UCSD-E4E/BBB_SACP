@@ -80,15 +80,20 @@ int main(int argc, char** argv){
 			if(control_Socket.recv(&command, ZMQ_NOBLOCK)){
 				// process command
 				cout << "Have command!\nProcessing command..." << flush;
+				string cmdValue((char*)command.data(), command.size());
+				istringstream iss(cmdValue);
 				string cmd;
-				cout << command.size() << endl;
+				iss >> cmd;
 				if(!cmd.compare("SETPOINT")){
 					float setQuat[4];
-//					iss >> setQuat[0] >> setQuat[1] >> setQuat[2] >> setQuat[3];
+					iss >> setQuat[0] >> setQuat[1] >> setQuat[2] >> setQuat[3];
 					setPoint = Quaternion<float>(setQuat);
 					cout << "Have setpoint!" << endl;
+					float setPoints[3];
+					setPoint.toEuler(setPoints);
+					cout << setPoints[0] << endl << setPoints[1] << endl << setPoints[2] << endl;
 				}else if(!cmd.compare("STABILIZATION")){
-//					iss >> _stabilization;
+					iss >> _stabilization;
 					cout << "Have stabilize command!" << endl;
 				}
 				if(!cmd.compare("exit")){
@@ -96,7 +101,7 @@ int main(int argc, char** argv){
 					cout << "Exiting now!" << endl;
 				}
 				// Received command, reply
-//				cmd = "done";
+				cmd = "done";
 				command.rebuild(4);
 				memcpy((void*)command.data(), cmd.c_str(), cmd.size());
 				if(!control_Socket.send(command)){
