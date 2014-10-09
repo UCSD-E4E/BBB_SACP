@@ -31,8 +31,8 @@ def get_packet(descriptor_set, field_descriptor, field_data):
 
 s = serial.Serial('/dev/ttyACM0')
 context = zmq.Context()
-socket = zmq.socket(zmq.PUB)
-socket.bind("tcp://localhost:53681");
+socket = context.socket(zmq.PUB)
+socket.bind("tcp://127.0.0.1:55004");
 
 while True:
     # sync to first byte

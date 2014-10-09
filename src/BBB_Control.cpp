@@ -12,6 +12,8 @@
 #include <CRServo.hpp>
 #include <sstream>
 #include <iostream>
+#include <ctime>
+#include <sys/time.h>
 using namespace std;
 
 // Defines
@@ -40,17 +42,17 @@ int main(int argc, char** argv){
 	cout << "done." << endl;
 
 	// Set up sensors
-//	MPU9150 sensor (1);
-//	int result = sensor.initialize();
-//	if(result){
-//		return 1;
-//	}
-//
-//	if((result = getSensorState())){
-//		return 1;
-//	}
-//	// TODO: enable and configure FIFO
-//
+	//	MPU9150 sensor (1);
+	//	int result = sensor.initialize();
+	//	if(result){
+	//		return 1;
+	//	}
+	//
+	//	if((result = getSensorState())){
+	//		return 1;
+	//	}
+	//	// TODO: enable and configure FIFO
+	//
 	// Set up stabilization
 	cout << "Initializing Stabilization..." << flush;
 	setPoint = Quaternion <float> (1, 0, 0, 0);
@@ -67,63 +69,68 @@ int main(int argc, char** argv){
 	// Begin doing stuff
 	cout << "Beginning control loops:" << endl;
 	bool runState = true;
+	struct timeval tp;
+	uint64_t prevRun = 0;
 	while(runState){
-		zmq::message_t command;
-//		cout << "Checking for command..." << flush;
-		if(control_Socket.recv(&command, ZMQ_NOBLOCK)){
-			// process command
-//			cout << "Have command!\nProcessing command..." << flush;
-			std::istringstream iss(static_cast <char*> (command.data()));
-			string cmd;
-			iss >> cmd;
-			cmd = cmd.substr(0, command.size());
-			if(!cmd.compare("SETPOINT")){
-				float setQuat[4];
-				iss >> setQuat[0] >> setQuat[1] >> setQuat[2] >> setQuat[3];
-				setPoint = Quaternion<float>(setQuat);
-				cout << "Have setpoing!" << endl;
-			}else if(!cmd.compare("STABILIZATION")){
-				iss >> _stabilization;
-//				cout << "Have stabilize command!" << endl;
-			}else if(!cmd.compare("exit")){
-				runState = false;
-				cout << "Exiting now!" << endl;
+		gettimeofday(&tp, NULL);
+		if(tp.tv_usec / 1000 + tp.tv_sec > prevRun + 50000){
+			prevRun += 50000;
+			zmq::message_t command;
+//			cout << "Checking for command..." << flush;
+			if(control_Socket.recv(&command, ZMQ_NOBLOCK)){
+				// process command
+				cout << "Have command!\nProcessing command..." << flush;
+				string cmd;
+				cout << command.size() << endl;
+				if(!cmd.compare("SETPOINT")){
+					float setQuat[4];
+//					iss >> setQuat[0] >> setQuat[1] >> setQuat[2] >> setQuat[3];
+					setPoint = Quaternion<float>(setQuat);
+					cout << "Have setpoint!" << endl;
+				}else if(!cmd.compare("STABILIZATION")){
+//					iss >> _stabilization;
+					cout << "Have stabilize command!" << endl;
+				}
+				if(!cmd.compare("exit")){
+					runState = false;
+					cout << "Exiting now!" << endl;
+				}
+				// Received command, reply
+//				cmd = "done";
+				command.rebuild(4);
+				memcpy((void*)command.data(), cmd.c_str(), cmd.size());
+				if(!control_Socket.send(command)){
+					abort();
+				}
+			}else{
+//				cout << "no command." << endl;
 			}
-			// Received command, reply
-			cmd = "done";
-			command.rebuild(4);
-			memcpy((void*)command.data(), cmd.c_str(), cmd.size());
-			if(!control_Socket.send(&command){){
-				abort();
-			}
-		}else{
-//			cout << "no command." << endl;
-		}
-		// No command, continue
+			// No command, continue
 
-		// Check for sensor update
-//		cout << "Checking for sensor update..." << flush;
-		zmq::message_t sensor_update;
-		if(sensor_Socket.recv(&sensor_update, ZMQ_NOBLOCK)){
-//			cout << "Have update!\nProcessing update..." << flush;
-			// got update!
-			std::istringstream iss(static_cast <char*> (sensor_update.data()));
-			iss >> sensorUpdate[0] >> sensorUpdate[1] >> sensorUpdate[2] >> sensorUpdate[3];
-			imuPoint = Quaternion <float> (sensorUpdate);
+			// Check for sensor update
+//			cout << "Checking for sensor update..." << flush;
+			zmq::message_t sensor_update;
+			if(sensor_Socket.recv(&sensor_update, ZMQ_NOBLOCK)){
+//				cout << "Have update!\nProcessing update..." << flush;
+				// got update!
+				std::istringstream iss(static_cast <char*> (sensor_update.data()));
+				iss >> sensorUpdate[0] >> sensorUpdate[1] >> sensorUpdate[2] >> sensorUpdate[3];
+				imuPoint = Quaternion <float> (sensorUpdate);
+//				cout << "done." << endl;
+			}else{
+//				cout << "no update." << endl;
+			}
+			// Update setPoint and execute
+//			cout << "Updating control loop..." << flush;
+			Quaternion <float> moveQuat = setPoint / imuPoint;
+			float movePoints[3];
+			moveQuat.toEuler(movePoints);
+
+			rollServo.setAngle(movePoints[0]);
+			pitchServo.setAngle(movePoints[1]);
 //			cout << "done." << endl;
-		}else{
-//			cout << "no update." << endl;
+
+			// Publish data
 		}
-		// Update setPoint and execute
-//		cout << "Updating control loop..." << flush;
-		Quaternion <float> moveQuat = setPoint / imuPoint;
-		float movePoints[3];
-		moveQuat.toEuler(movePoints);
-
-		rollServo.setAngle(movePoints[0]);
-		pitchServo.setAngle(movePoints[1]);
-//		cout << "done." << endl;
-
-		// Publish data
 	}
 }
