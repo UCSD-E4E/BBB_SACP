@@ -1,3 +1,4 @@
+#ifndef _CRSERVO
 #include "PWM.hpp"
 
 class CRServo{
@@ -12,3 +13,4 @@ class CRServo{
 		uint32_t _minPulse;
 		float _curSpeed;
 };
+#endif
