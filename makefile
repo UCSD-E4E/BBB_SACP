@@ -1,13 +1,16 @@
 all:
 	test -d build || mkdir build
 	cp ./src/microstrainServer.py ./build/microstrainServer.py
-	make bbb_cli bbb_ctrl
+	make bbb_cli bbb_ctrl uStrain
 
 bbb_cli:
-	g++ ./src/BBB_CLI.cpp -o ./build/BBB_CLI -std=gnu++0x -Ilibraries -lzmq
+	g++ ./src/BBB_CLI.cpp -o ./build/BBB_CLI -std=gnu++0x -Ilibraries -lzmq -g
 
 bbb_ctrl:
 	g++ ./src/BBB_Control.cpp ./libraries/PWM.cpp ./libraries/Servo.cpp ./libraries/CRServo.cpp -o ./build/BBB_Control -std=gnu++0x -Ilibraries -lzmq -g
+
+uStrain:
+	g++ ./src/parse_stream.cpp -o ./build/parse_stream -std=gnu++0x -g -lzmq -Ilibraries
 
 clean:
 	rm -r ./build
