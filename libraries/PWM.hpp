@@ -39,20 +39,23 @@
 #include <iostream>
 
 // Constants Definitions
-#define	PWM_P8_13	0
-#define PWM_P8_19	1
-#define PWM_P8_34	2
-#define PWM_P8_36	3
-#define PWM_P8_45	4
-#define PWM_P8_46	5
-#define PWM_P9_14	6
-#define PWM_P9_16	7
-#define PWM_P9_21	8
-#define PWM_P9_22	9
-#define PWM_P9_28	10
-#define PWM_P9_29	11
-#define PWM_P9_31	12
-#define PWM_P9_42	13
+enum pwm_pins_t{
+	PWM_P8_13 = 0,
+	PWM_P8_19 = 1,
+	PWM_P8_34 = 2,
+	PWM_P8_36 = 3,
+	PWM_P8_45 = 4,
+	PWM_P8_46 = 5,
+	PWM_P9_14 = 6,
+	PWM_P9_16 = 7,
+	PWM_P9_21 = 8,
+	PWM_P9_22 = 9,
+	PWM_P9_28 = 10,
+	PWM_P9_29 = 11,
+	PWM_P9_31 = 12,
+	PWM_P9_42 = 13,
+}
+
 #define PWM_PULSE_HIGH	0
 #define PWM_PULSE_LOW	1
 #define PWM_ON	1
@@ -60,7 +63,7 @@
 
 class PWM{
 	public:
-		PWM(const uint8_t pin, const uint32_t frequency);
+		PWM(const pwm_pins_t pin, const uint32_t frequency);
 		~PWM();
 		void setDuty(const float dutyPercentage);
 		void setPeriod(const uint32_t period);

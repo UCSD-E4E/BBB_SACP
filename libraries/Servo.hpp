@@ -2,7 +2,7 @@
 
 class Servo{
 	public:
-		Servo(const uint8_t pin, const uint32_t frequency, const uint32_t lowPulse, const uint32_t highPulse, const float msDegRatio);
+		Servo(const pwm_pin_t pin, const uint32_t frequency, const uint32_t lowPulse, const uint32_t highPulse, const float msDegRatio);
 		void setAngle(const float degrees);
 		int getAngle();
 	private:

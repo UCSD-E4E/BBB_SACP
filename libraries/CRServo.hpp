@@ -2,7 +2,7 @@
 
 class CRServo{
 	public:
-		CRServo(const uint8_t pin, const uint32_t frequency, const uint32_t zeroSpeed, const uint32_t maxForwardSpeed, const uint32_t maxBackwardSpeed);
+		CRServo(const pwm_pins_t pin, const uint32_t frequency, const uint32_t zeroSpeed, const uint32_t maxForwardSpeed, const uint32_t maxBackwardSpeed);
 		void setSpeed(const float speed);
 		float getSpeed();
 	private:
