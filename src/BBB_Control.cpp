@@ -73,6 +73,7 @@ int main(int argc, char** argv){
 	uint8_t uStrainBuffer[128];
 	int uStrain_byte_cnt;
 	uint8_t uStrainOut[128];
+	cout << "done" << endl;
 
 	// Set up stabilization
 	cout << "Initializing Stabilization..." << flush;
@@ -80,9 +81,10 @@ int main(int argc, char** argv){
 	imuPoint = Quaternion <float> (1, 0, 0, 0);
 	float sensorUpdate[4];
 
+	cerr << "Fail here" << endl;
 	Servo pitchServo (PWM_P8_13, 50, 740000, 2300000, 5888888);
 	Servo rollServo(PWM_P8_34, 50, 740000, 2300000, 5888888);
-	//CRServo yawServo(PWM_P8_45, 50, 670000, 1534000, 2400000);
+	CRServo yawServo(PWM_P8_45, 50, 670000, 1534000, 2400000);
 	cout << "done." << endl;
 
 	float yawSetPt = 0.0;
@@ -119,10 +121,12 @@ int main(int argc, char** argv){
 				}else if(!cmd.compare("STABILIZATION")){
 					iss >> _stabilization;
 					cout << "Have stabilize command!" << endl;
-				}
-				if(!cmd.compare("exit")){
+				}else if(!cmd.compare("exit")){
 					runState = false;
 					cout << "Exiting now!" << endl;
+				}else{
+					cout << "Bad Command" << endl;
+					runState = false;
 				}
 				// Received command, reply
 				cmd = "done";
