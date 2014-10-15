@@ -14,15 +14,38 @@
 #include <iostream>
 #include <ctime>
 #include <sys/time.h>
+#include <stdio>
+#include <string.h>
+#include <stdlib>
+#include <termios.h>
+#include <unistd.h>
+#include <fcntl.h>
 using namespace std;
 
 // Defines
+#define YAW_P 0
+#define YAW_I 0
+#define YAW_D 0
 
 // Global Variables
 Quaternion <float> setPoint;
 Quaternion <float> imuPoint;
 bool _stabilization = true;
 float yawSetPoint = 0;
+struct termios options;
+
+// Function definitions
+float swap_bytes(unsigned char* buffer){
+	unsigned char reversed[4];
+	reversed[0] = buffer[3];
+	reversed[1] = buffer[2];
+	reversed[2] = buffer[1];
+	reversed[3] = buffer[0];
+
+	float tmp;
+	memcpy(&tmp, &reversed[0], sizeof(float));
+	return tmp;
+}
 
 int main(int argc, char** argv){
 	// Set up communications
@@ -36,23 +59,20 @@ int main(int argc, char** argv){
 	zmq::socket_t data_Socket (data_Context, ZMQ_PUB);
 	data_Socket.bind("tcp://127.0.0.1:55002");
 
-	zmq::context_t sensor_Context (1);
-	zmq::socket_t sensor_Socket(sensor_Context, ZMQ_SUB);
-	sensor_Socket.connect("tcp://127.0.0.1:55004");
-	cout << "done." << endl;
+	int sensorFile = open("/dev/ttyACM0", O_RDWR | O_NOCTTY);
+	if(sensorFile = -1){
+		abort();
+	}else{
+		tcgetattr(sensorFile, &options);
+		cfsetispeed(&options, B115200);
+		cfsetospeed(&options, B115200);
+		options.c_cflag |= (CLOACL | CREAD);
+		tcsetattr(sensorFile, TCSANOW, & options);
+	}
+	uint8_t uStrainBuffer[128];
+	int uStrain_byte_cnt;
+	uint8_t uStrainOut[128];
 
-	// Set up sensors
-	//	MPU9150 sensor (1);
-	//	int result = sensor.initialize();
-	//	if(result){
-	//		return 1;
-	//	}
-	//
-	//	if((result = getSensorState())){
-	//		return 1;
-	//	}
-	//	// TODO: enable and configure FIFO
-	//
 	// Set up stabilization
 	cout << "Initializing Stabilization..." << flush;
 	setPoint = Quaternion <float> (1, 0, 0, 0);
@@ -64,8 +84,12 @@ int main(int argc, char** argv){
 	//CRServo yawServo(PWM_P8_45, 50, 670000, 1534000, 2400000);
 	cout << "done." << endl;
 
-	// TODO: enable and configure interrupt driven sensor update
+	float YAWSET = 0;
+	float prevYaw = 0;
+	float curYawVel = 0;
+	float curYawErr = 0;
 
+	
 	// Begin doing stuff
 	cout << "Beginning control loops:" << endl;
 	bool runState = true;
@@ -76,7 +100,6 @@ int main(int argc, char** argv){
 		if(tp.tv_usec / 1000 + tp.tv_sec > prevRun + 50000){
 			prevRun += 50000;
 			zmq::message_t command;
-//			cout << "Checking for command..." << flush;
 			if(control_Socket.recv(&command, ZMQ_NOBLOCK)){
 				// process command
 				cout << "Have command!\nProcessing command..." << flush;
@@ -108,32 +131,70 @@ int main(int argc, char** argv){
 					abort();
 				}
 			}else{
-//				cout << "no command." << endl;
 			}
 			// No command, continue
 
 			// Check for sensor update
-//			cout << "Checking for sensor update..." << flush;
-			zmq::message_t sensor_update;
-			if(sensor_Socket.recv(&sensor_update, ZMQ_NOBLOCK)){
-//				cout << "Have update!\nProcessing update..." << flush;
-				// got update!
-				std::istringstream iss(static_cast <char*> (sensor_update.data()));
-				iss >> sensorUpdate[0] >> sensorUpdate[1] >> sensorUpdate[2] >> sensorUpdate[3];
-				imuPoint = Quaternion <float> (sensorUpdate);
-//				cout << "done." << endl;
-			}else{
-//				cout << "no update." << endl;
+			uStrain_byte_cnt = read(sensorFile, &uStrainBuffer, 1);
+			if(uStrain_byte_cnt > 0 && uStrainBuffer[0] == 0x65){
+				uStrain_byte_cnt = read(sensorFile, &uStrainBuffer, 4);
+				uint8_t sensorFileriptor_set = uStrainBuffer[0];
+				uint8_t payload_length = uStrainBuffer[1];
+				uint8_t field_length = uStrainBuffer[2];
+				uint8_t field_sensorFileriptor = uStrainBuffer[3];
+
+				if(payload_length == field_length){
+					uStrain_byte_cnt = read(sensorFile, &uStrainBuffer, payload_length);
+					switch(sensorFileriptor_set){
+						case 0x01:
+							if(field_sensorFileriptor == 0xF1){
+								if(uStrainBuffer[1] == 0x00){
+									cout << uStrainBuffer[0] << ": ACK" << endl;
+								}else{
+									cout << uStrainBuffer[0] << ": NACK" << endl;
+								}
+							}
+							break;
+						case 0x80:
+							switch(field_sensorFileriptor){
+								case 0x0A:	// Quaternion
+									imuPoint = Quaternion <float> (swap_bytes(&uStrainBuffer[0]), swap_bytes(&uStrainBuffer[4]), swap_bytes(&uStrainBuffer[8]), swap_bytes(&uStrainBuffer[12]));
+									break;
+								case 0x0C:	// Euler Angles
+									// do nothing;
+								default:
+									break;
+							}
+							break;
+						case 0x81:
+							switch(field_sensorFileriptor){
+								case 0x03:
+									uint8_t valid = uStrainBuffer[48];
+									uint8_t lat_lng_valid = valid & 0x01;
+									uint8_t elipsoid_height_valid = valid & 0x02;
+									uint8_t msl_height_valid = valid & 0x04;
+									uint8_t horizontal_accuracy_valid = valid & 0x08;
+									uint8_t vertical_accuracy_valid  = valid & 0x10;
+
+									break;
+							}
+					}
+				}
 			}
+			// TODO Check that sensor update is correct
+
 			// Update setPoint and execute
-//			cout << "Updating control loop..." << flush;
 			Quaternion <float> moveQuat = setPoint / imuPoint;
 			float movePoints[3];
 			moveQuat.toEuler(movePoints);
 
 			rollServo.setAngle(movePoints[0]);
 			pitchServo.setAngle(movePoints[1]);
-//			cout << "done." << endl;
+			curYawVel = movePoints[2] - prevYaw;
+			curYawErr += movePoints[2] - YAWSET;
+			prevYaw = movePoints[2];
+			float yawSpeed = YAW_P * (curYaw - YAWSET) + YAW_I * (curYawErr) + YAW_D * curYawVel;
+			// TODO send velocity to yawServo
 
 			// Publish data
 		}

@@ -1,6 +1,6 @@
 #include "Servo.hpp"
 
-Servo::Servo(const uint8_t pin, const uint32_t frequency, 
+Servo::Servo(const pwm_pin_t pin, const uint32_t frequency, 
 		const uint32_t lowPulse, const uint32_t highPulse, 
 		const float msDegRatio):_pwmPin(pin, frequency), _lowPulse(lowPulse), 
 		_highPulse(highPulse), _pulseScaling(msDegRatio), _curPulse(15000000){

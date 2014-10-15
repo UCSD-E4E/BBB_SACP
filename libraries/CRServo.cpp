@@ -1,6 +1,6 @@
 #include "CRServo.hpp"
 
-CRServo::CRServo(const uint8_t pin, const uint32_t frequency,
+CRServo::CRServo(const pwm_pin_t pin, const uint32_t frequency,
 		const uint32_t zeroSpeed, const uint32_t maxForwardSpeed,
 		const uint32_t maxBackwardSpeed):_pwmPin(pin, frequency),
 		_zeroSpeed(zeroSpeed), _maxPulse(maxForwardSpeed),
