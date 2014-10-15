@@ -85,6 +85,8 @@ while True:
 			    q2 = struct.unpack('f', ''.join(reversed(data[8:12])))[0]
 			    q3 = struct.unpack('f', ''.join(reversed(data[12:16])))[0]
 			    socket.send_string("%f %f %f %f" % (q0, q1, q2, q3))
+                            print("%f %f %f %f" % (q0, q1, q2, q3))
+
 
 			# wrapped ahrs
 			elif ord(field_descriptor) == 0x82:
