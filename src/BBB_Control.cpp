@@ -115,9 +115,6 @@ int main(int argc, char** argv){
 					iss >> setQuat[0] >> setQuat[1] >> setQuat[2] >> setQuat[3];
 					setPoint = Quaternion<float>(setQuat);
 					cout << "Have setpoint!" << endl;
-					float setPoints[3];
-					setPoint.toEuler(setPoints);
-					cout << setPoints[0] << endl << setPoints[1] << endl << setPoints[2] << endl;
 				}else if(!cmd.compare("STABILIZATION")){
 					iss >> _stabilization;
 					cout << "Have stabilize command!" << endl;
@@ -193,6 +190,7 @@ int main(int argc, char** argv){
 			float movePoints[3];
 			moveQuat.toEuler(movePoints);
 
+			cerr << movePoints[1] << endl;
 			rollServo.setAngle(movePoints[0]);
 			pitchServo.setAngle(movePoints[1]);
 			curYawVel = movePoints[2] - prevYaw;
