@@ -31,7 +31,7 @@ using namespace std;
 // Internal Defines
 
 
-PWM::PWM(const uint8_t pin, const uint32_t frequency){
+PWM::PWM(const pwm_pins_t pin, const uint32_t frequency){
 	_pin = pin;
 
 	_ocpDir = "/sys/devices/ocp.3";
