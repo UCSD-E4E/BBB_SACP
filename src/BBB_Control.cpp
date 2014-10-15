@@ -60,7 +60,7 @@ int main(int argc, char** argv){
 	data_Socket.bind("tcp://127.0.0.1:55002");
 
 	int sensorFile = open("/dev/ttyACM0", O_RDWR | O_NOCTTY);
-	if(sensorFile = -1){
+	if(sensorFile == -1){
 		cerr << "could not access uStrain!" << endl;
 		abort();
 	}else{
