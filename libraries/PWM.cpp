@@ -25,6 +25,7 @@
 
 // Includes
 #include "PWM.hpp"
+#include <string.h>
 
 using namespace std;
 
@@ -35,7 +36,6 @@ PWM::PWM(const pwm_pins_t pin, const uint32_t frequency){
 	_pin = pin;
 
 	_ocpDir = "/sys/devices/ocp.3";
-
 	switch(pin){
 		case 0:
 			_ocpDir += "/pwm_test_P8_13.11";
