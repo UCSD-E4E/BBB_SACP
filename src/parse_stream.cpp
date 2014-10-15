@@ -127,9 +127,10 @@ int main()
 							q2 = swap_bytes(&buffer[8]);
 							q3 = swap_bytes(&buffer[12]);
 							snprintf(out, 128, "%f %f %f %f", q0, q1, q2, q3);
-							std::cout << out << std::endl;
+							std::cout << out << '\t'<< std::flush;
 							zmq::message_t msg(strlen(out));
 							memcpy((void*)msg.data(), out, strlen(out));
+							std::cout << msg.size() << std::endl;
 							socket.send(msg);
 							//			    std::cout << out << std::endl;
 						}
