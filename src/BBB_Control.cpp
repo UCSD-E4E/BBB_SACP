@@ -14,9 +14,9 @@
 #include <iostream>
 #include <ctime>
 #include <sys/time.h>
-#include <stdio>
+#include <cstdio>
 #include <string.h>
-#include <stdlib>
+#include <cstdlib>
 #include <termios.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -66,7 +66,7 @@ int main(int argc, char** argv){
 		tcgetattr(sensorFile, &options);
 		cfsetispeed(&options, B115200);
 		cfsetospeed(&options, B115200);
-		options.c_cflag |= (CLOACL | CREAD);
+		options.c_cflag |= (CLOCAL | CREAD);
 		tcsetattr(sensorFile, TCSANOW, & options);
 	}
 	uint8_t uStrainBuffer[128];
@@ -84,10 +84,10 @@ int main(int argc, char** argv){
 	//CRServo yawServo(PWM_P8_45, 50, 670000, 1534000, 2400000);
 	cout << "done." << endl;
 
-	float YAWSET = 0;
-	float prevYaw = 0;
-	float curYawVel = 0;
-	float curYawErr = 0;
+	float yawSetPt = 0.0;
+	float prevYaw = 0.0;
+	float curYawVel = 0.0;
+	float curYawErr = 0.0;
 
 	
 	// Begin doing stuff
@@ -191,9 +191,9 @@ int main(int argc, char** argv){
 			rollServo.setAngle(movePoints[0]);
 			pitchServo.setAngle(movePoints[1]);
 			curYawVel = movePoints[2] - prevYaw;
-			curYawErr += movePoints[2] - YAWSET;
+			curYawErr += movePoints[2] - yawSetPt;
 			prevYaw = movePoints[2];
-			float yawSpeed = YAW_P * (curYaw - YAWSET) + YAW_I * (curYawErr) + YAW_D * curYawVel;
+			float yawSpeed = YAW_P * (movePoints[2] - yawSetPt) + YAW_I * (curYawErr) + YAW_D * curYawVel;
 			// TODO send velocity to yawServo
 
 			// Publish data
