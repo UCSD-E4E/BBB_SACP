@@ -39,6 +39,7 @@
 #include <iostream>
 
 // Constants Definitions
+// TODO change to pwm_pins.  POSIX does not permit _t suffix in user defined types!
 enum pwm_pins_t{
 	PWM_P8_13 = 0,
 	PWM_P8_19 = 1,
