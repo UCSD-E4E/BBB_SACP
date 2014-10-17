@@ -190,7 +190,6 @@ int main(int argc, char** argv){
 			float movePoints[3];
 			moveQuat.toEuler(movePoints);
 
-			cerr << movePoints[1] << endl;
 			rollServo.setAngle(movePoints[0]);
 			pitchServo.setAngle(movePoints[1]);
 			curYawVel = movePoints[2] - prevYaw;
