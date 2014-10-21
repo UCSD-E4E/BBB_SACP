@@ -4,6 +4,7 @@
 // Definitions
 #define PITCH_SERVO	D5
 #define PITCH_MIN	164
+#define PITCH_RANGE
 #define PITCH_MAX	212
 #define YAW_SERVO	D3
 #define YAW_MIN		141
@@ -11,6 +12,7 @@
 #define YAW_MAX		241
 #define ROLL_SERVO	B1
 #define ROLL_MIN	245
+#define ROLL_RANGE
 #define ROLL_MAX	505
 
 // Global Variables
@@ -31,6 +33,7 @@ void setup(){
 	TCCR1A = 0;
 	TCCR1B = 3;	// Select no prescaler
 	TIMSK1 |= 1 << 0 | 1 << 1 | 1 << 2;	// enable overflow interrupt
+	OCR1B = 600;	// Set frequency
 
 	sei(); // reenable interrupts
 }
@@ -38,20 +41,19 @@ void setup(){
 void loop(){
 	OCR2B = 188;	// set mid pitch
 	OCR2A = YAW_ZERO;
-	OCR1B = 600;
 	OCR1A = 375;	// set mid roll
 }
 
 ISR(TIMER2_COMPA_vect){
-	// Yaw
+	// Yaw falling edge
 	PORTD &= ~(1 << 3);
 }
 ISR(TIMER2_COMPB_vect){
-	// Pitch
+	// Pitch falling edge
 	PORTD &= ~(1 << 5);
 }
 ISR(TIMER1_COMPA_vect){
-	// Roll
+	// Roll falling edge
 	PORTB &= ~(1 << 1);
 }
 
