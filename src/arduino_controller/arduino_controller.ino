@@ -3,17 +3,17 @@
 
 // Definitions
 #define PITCH_SERVO	D5
-#define PITCH_MIN	164
-#define PITCH_RANGE
-#define PITCH_MAX	212
+#define PITCH_MIN	121
+#define PITCH_RANGE	175
+#define PITCH_MAX	255
 #define YAW_SERVO	D3
 #define YAW_MIN		141
 #define YAW_ZERO	191
 #define YAW_MAX		241
 #define ROLL_SERVO	B1
-#define ROLL_MIN	245
-#define ROLL_RANGE
-#define ROLL_MAX	505
+#define ROLL_MIN	333
+#define ROLL_RANGE	60
+#define ROLL_MAX	425
 
 // Global Variables
 
@@ -39,9 +39,9 @@ void setup(){
 }
 
 void loop(){
-	OCR2B = 188;	// set mid pitch
+	OCR2B = (PITCH_MIN + PITCH_MAX) / 2;	// set mid pitch
 	OCR2A = YAW_ZERO;
-	OCR1A = 375;	// set mid roll
+	OCR1A = (ROLL_MIN + ROLL_MAX) / 2;	// set mid roll
 }
 
 ISR(TIMER2_COMPA_vect){
