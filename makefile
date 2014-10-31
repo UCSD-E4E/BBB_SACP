@@ -30,6 +30,6 @@ test:
 	./build/test
 
 testAVRMPU:
-	avr-gcc --mmcu=atmega328p ./test/testMPU9150.c ./libraries/MPU9150.c -Ilibraries -o ./build/testAVRMPU.out -Wall
+	avr-gcc -mmcu=atmega328p ./test/testMPU9150.c ./libraries/MPU9150.c -Ilibraries -o ./build/testAVRMPU.out -Wall
 	avr-objcopy -j .text .j .data -O ihex ./build/textAVRMPU.out ./build/textAVRMPU.hex
 
