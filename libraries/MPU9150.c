@@ -11,7 +11,7 @@ int _i2c_write(uint8_t dest, uint8_t val){
 	while(!(TWCR & (1 << 7))){
 		// wait for completion of I2C operation
 	}
-	if(TWSR & 0xf8 != 0x08 && TWSR & 0xf8 != 0x10){
+	if((TWSR & 0xf8) != 0x08 && (TWSR & 0xf8) != 0x10){
 		return -1;
 	}
 	// Load _i2c_addr and send
@@ -55,7 +55,7 @@ uint8_t _i2c_read(uint8_t reg){
 	while(!(TWCR & (1 << 7))){
 		// wait for completion of I2C operation
 	}
-	if(TWSR & 0xf8 != 0x08 && TWSR & 0xf8 != 0x10){
+	if((TWSR & 0xf8) != 0x08 && (TWSR & 0xf8) != 0x10){
 		return -1;
 	}
 	// Load _i2c_addr and send
@@ -84,7 +84,7 @@ uint8_t _i2c_read(uint8_t reg){
 	while(!(TWCR & (1 << 7))){
 		// wait for i2c op
 	}
-	if(TWSR & 0xf8 != 0x08 && TWSR & 0xf8 != 0x10){
+	if((TWSR & 0xf8) != 0x08 && (TWSR & 0xf8) != 0x10){
 		return -1;
 	}
 	// load _i2c_addr + read bit and send
@@ -94,7 +94,7 @@ uint8_t _i2c_read(uint8_t reg){
 	while(!(TWCR & (1 << 7))){
 		// wait for i2c op
 	}
-	if(!(TWSR & 0xf8 == 0x40)){
+	if(!((TWSR & 0xf8) == 0x40)){
 		return -1;
 	}
 	// clear 7
@@ -103,7 +103,7 @@ uint8_t _i2c_read(uint8_t reg){
 	while(!(TWCR & (1 << 7))){
 		// wait for i2c op
 	}
-	if(!(TWSR & 0xf8 == 0x58)){
+	if(!((TWSR & 0xf8) == 0x58)){
 		return -1;
 	}
 	uint8_t temp = TWDR;
@@ -134,9 +134,9 @@ int MPU9150_init(){
 	_i2c_write(MPU9150_I2C_MST_CTRL, 1 << 4 | 8);
 
 	// configure i2c slave 0
-	_i2c_write(MPU9150_SLV0_ADDR, ADDR2 | 1 << 7);
-	_i2c_write(MPU9150_SLV0_REG, 0x03);
-	_i2c_write(MPU9150_SLV0_CTRL, 6 | 1 << 7);
+	_i2c_write(MPU9150_I2C_SLV0_ADDR, ADDR2 | 1 << 7);
+	_i2c_write(MPU9150_I2C_SLV0_REG, 0x03);
+	_i2c_write(MPU9150_I2C_SLV0_CTRL, 6 | 1 << 7);
 
 	// configure interrupt enable
 	_i2c_write(MPU9150_INT_ENABLE, 1);

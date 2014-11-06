@@ -94,7 +94,7 @@
 #define MPU9150_I2C_MST_DELAY_CTRL	0x67
 #define MPU9150_SIGNAL_PATH_RESET	0x68
 #define MPU9150_MOT_DETECT_CTRL		0x69
-#define MPU9150_USERCTRL			0x6A
+#define MPU9150_USER_CTRL			0x6A
 #define MPU9150_PWR_MGMT_1			0x6B
 #define MPU9150_PWR_MGMT_2			0x6C
 #define MPU9150_FIFO_COUNTH			0x72
@@ -121,9 +121,9 @@
 #define MPU9150_MAG_ASAY			0x11
 #define MPU9150_MAG_ASAZ			0x12
 
-int16_t accelX, accelY, accelZ;
-int16_t gyroX, gyroY, gyroZ;
-int16_t magX, magY, magZ;
+int accelX, accelY, accelZ;
+int gyroX, gyroY, gyroZ;
+int magX, magY, magZ;
 
 int _i2c_write(uint8_t dest, uint8_t val);
 uint8_t _i2c_read(uint8_t reg);
