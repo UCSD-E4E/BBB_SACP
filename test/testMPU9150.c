@@ -1,18 +1,25 @@
-#include <MPU9150.h>
+#define F_CPU 16000000UL	// 16 MHz
 
-void setup(){
-	Serial.begin(57600);
-	MPU9150_init();
-}
+#include <MPU9150.h>
+#include <uart.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <ctype.h>
+#include <util/delay.h>
+
+FILE uart_str = FDEV_SETUP_STREAM(uart_putchar, uart_getchar, _FDEV_SETUP_RW);
+
 void loop(){
 	MPU9150_Read();
-	Serial.println(accelX + '\t' + accelY + '\t' + accelZ + '\t' + gyroX + '\t' + gyroY + '\t' + gyroZ + '\t' + magX + '\t' + magY + '\t' + magZ);
-	delay(5);
+	printf("%6i\t%6i\t%6i\t%6i\t%6i\t%6i\t%6i\t%6i\t%6i\n", accelX, accelY, accelZ, gyroX, gyroY, gyroZ, magZ, magY, magZ); 
+	_delay_ms(5);
 
 }
 
 int main(int argc, char** arvg){
-	setup();
+	uart_init();
+	MPU9150_init();
+	stdout = stdin = &uart_str;
 	while(1){
 		loop();
 	}
