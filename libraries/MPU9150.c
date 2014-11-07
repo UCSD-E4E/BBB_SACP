@@ -1,5 +1,7 @@
+#define DEBUG(X) printf(X)
 #include "MPU9150.h"
 #include <stdint.h>
+#include <stdio.h>
 #include <avr/io.h>
 
 uint8_t _i2c_addr = 0;
@@ -50,9 +52,9 @@ int _i2c_write(uint8_t dest, uint8_t val){
 }
 uint8_t _i2c_read(uint8_t reg){
 	// Set Start condition
-	TWCR = 1 << 7 | 1 << 5 | 1 << 2;
+	TWCR |= 1 << TWINT | 1 << TWSTA | 1 << TWEN;
 	// Check for master control
-	while(!(TWCR & (1 << 7))){
+	while(TWSR != 0x08){
 		// wait for completion of I2C operation
 	}
 	if((TWSR & 0xf8) != 0x08 && (TWSR & 0xf8) != 0x10){
@@ -112,23 +114,36 @@ uint8_t _i2c_read(uint8_t reg){
 	return temp;
 }
 int MPU9150_init(){
+	uint8_t temp;
+	DEBUG("Initializing MPU9150...\n");
+	DEBUG("Turning on MPU9150...");
 	_i2c_addr = ADDR1;
 	_i2c_write(MPU9150_PWR_MGMT_1, 1 << 0);
+	DEBUG("done\n");
+
 	// Configure gyro to +- 250 deg / sec
-	uint8_t temp = _i2c_read(MPU9150_GYRO_CONFIG);
-	_i2c_write(MPU9150_GYRO_CONFIG, temp & ~(1 << 3 | 1 << 4));
+	DEBUG("Configuring gyroscope rate...");
+//	temp = _i2c_read(MPU9150_GYRO_CONFIG);
+	_i2c_write(MPU9150_GYRO_CONFIG, 0);
+	DEBUG("done\n");
 	
 	// configure acc to +- 2g
+	DEBUG("Configuring accelerometer sensitivity...");
 	temp = _i2c_read(MPU9150_ACCEL_CONFIG);
 	_i2c_write(MPU9150_ACCEL_CONFIG, temp & ~(1 << 3 | 1 << 4));
+	DEBUG("done\n");
 
 	// enable mag passthrough
+	DEBUG("Enabling magnetometer passthrough...");
 	_i2c_write(MPU9150_I2C_INT_PIN_CFG, 1 << 1);
+	DEBUG("done\n");
 
 	// configure mag
+	DEBUG("Configuring Magnetometer...");
 	_i2c_addr = ADDR2;
 	_i2c_write(MPU9150_MAG_CNTL, 1 << 0);
 	_i2c_addr = ADDR1;
+	DEBUG("done\n");
 
 	// configure i2c master
 	_i2c_write(MPU9150_I2C_MST_CTRL, 1 << 4 | 8);
