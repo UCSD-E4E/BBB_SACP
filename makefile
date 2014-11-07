@@ -34,3 +34,12 @@ testAVRMPU:
 	avr-objcopy -j .text -j .data -O ihex ./build/testAVRMPU.out ./build/testAVRMPU.hex
 	avrdude -c arduino -p m328p -P /dev/ttyACM0 -U flash:w:./build/testAVRMPU.hex:i 
 
+testAVR:
+	avr-gcc -mmcu=atmega328p ./test/testAVR.c ./libraries/*.c -Ilibraries -o ./build/testAVR.out -Wall -Os
+	avr-objcopy -j .text -j .data -O ihex ./build/testAVR.out ./build/testAVR.hex
+	avrdude -c arduino -p m328p -P /dev/ttyACM0 -U flash:w:./build/testAVR.hex:i 
+testAVRUART:
+	avr-gcc -mmcu=atmega328p ./test/testAVRUART.c ./libraries/*.c -Ilibraries -o ./build/testAVRUART.out -Wall -Os
+	avr-objcopy -j .text -j .data -O ihex ./build/testAVRUART.out ./build/testAVRUART.hex
+	avrdude -c arduino -p m328p -P /dev/ttyACM0 -U flash:w:./build/testAVRUART.hex:i 
+
