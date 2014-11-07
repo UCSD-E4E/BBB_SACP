@@ -18,8 +18,9 @@ void loop(){
 
 int main(int argc, char** arvg){
 	uart_init();
-	MPU9150_init();
 	stdout = stdin = &uart_str;
+	printf("Beginning...\n");
+	MPU9150_init();
 	while(1){
 		loop();
 	}
