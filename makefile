@@ -43,3 +43,8 @@ testAVRUART:
 	avr-objcopy -j .text -j .data -O ihex ./build/testAVRUART.out ./build/testAVRUART.hex
 	avrdude -c arduino -p m328p -P /dev/ttyACM0 -U flash:w:./build/testAVRUART.hex:i 
 
+avr_ctrl:
+	avr-gcc -mmcu=atmega328p ./src/arduino_controller.cpp ./libraries/*.c -Ilibraries -o ./build/avr_ctrl.out -Wall -Os
+	avr-objcopy -j .text -j .data -O ihex ./build/avr_ctrl.out ./build/avr_ctrl.hex
+	avrdude -c arduino -p m328p -P /dev/ttyACM0 -U flash:w:./build/avr_ctrl.hex:i
+
