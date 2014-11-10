@@ -52,6 +52,7 @@ int _i2c_write(uint8_t dest, uint8_t val){
 	TWCR = 1 << 7 | 1 << 2 | 1 << 4;
 	return 0;
 }
+
 uint8_t _i2c_read(uint8_t reg){
 	// Set Start condition
 	TWCR |= 1 << TWINT | 1 << TWSTA | 1 << TWEN;
@@ -115,6 +116,7 @@ uint8_t _i2c_read(uint8_t reg){
 	TWCR = 1 << 7 | 1 << 4 | 1 << 2;
 	return temp;
 }
+
 int MPU9150_init(){
 	uint8_t temp;
 	DEBUG("Initializing MPU9150...\n");
