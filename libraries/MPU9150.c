@@ -1,3 +1,5 @@
+#ifndef _MPU9150
+#define _MPU9150
 #define DEBUG(X) printf(X)
 #include "MPU9150.h"
 #include <stdint.h>
@@ -123,10 +125,10 @@ int MPU9150_init(){
 
 	// Configure gyro to +- 250 deg / sec
 	DEBUG("Configuring gyroscope rate...");
-//	temp = _i2c_read(MPU9150_GYRO_CONFIG);
+	//	temp = _i2c_read(MPU9150_GYRO_CONFIG);
 	_i2c_write(MPU9150_GYRO_CONFIG, 0);
 	DEBUG("done\n");
-	
+
 	// configure acc to +- 2g
 	DEBUG("Configuring accelerometer sensitivity...");
 	temp = _i2c_read(MPU9150_ACCEL_CONFIG);
@@ -166,7 +168,7 @@ int MPU9150_Read(){
 	uint8_t byte_L;
 
 	_i2c_addr = ADDR1;
-	
+
 	// accelX
 	byte_H = _i2c_read(MPU9150_ACCEL_XOUT_H);
 	byte_L = _i2c_read(MPU9150_ACCEL_XOUT_L);
@@ -213,3 +215,4 @@ int MPU9150_Read(){
 	magZ = byte_H << 8 | byte_L;
 	return 0;
 }
+#endif
