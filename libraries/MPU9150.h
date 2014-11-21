@@ -1,6 +1,6 @@
 // Check for compatible MCU
 #ifndef __AVR_ATmega328P__
-#error 'INVALID MCU DEFINED'
+//#error 'INVALID MCU DEFINED'
 #endif
 
 #ifndef _MPU9150_H_
