@@ -23,6 +23,8 @@
 #define YAW_KD		0
 
 // Global Variables
+struct dcm{
+
 
 int main(int argc, char** argv){
 	// setup
