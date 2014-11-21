@@ -1,6 +1,7 @@
 #define F_CPU 16000000UL	// 16 MHz
 
 #include <MPU9150.h>
+#include <avr/io.h>
 #include <uart.h>
 #include <stdio.h>
 #include <stdint.h>
