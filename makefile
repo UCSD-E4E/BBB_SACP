@@ -30,7 +30,7 @@ test:
 	./build/test
 
 testAVRMPU:
-	avr-gcc -mmcu=atmega328p ./test/testMPU9150.c ./libraries/*.c -Ilibraries -o ./build/testAVRMPU.out -Wall -Os
+	avr-gcc -mmcu=atmega328p ./test/testMPU9150.c ../Arduino/libraries/Wire/utility/twi.c ./libraries/*.c -I../Arduino/libraries/Wire/utility -I../Arduino/libraries/Wire -Ilibraries -o ./build/testAVRMPU.out -Wall -Os
 	avr-objcopy -j .text -j .data -O ihex ./build/testAVRMPU.out ./build/testAVRMPU.hex
 	avrdude -c arduino -p m328p -P /dev/ttyACM0 -U flash:w:./build/testAVRMPU.hex:i 
 
@@ -48,3 +48,12 @@ avr_ctrl:
 	avr-objcopy -j .text -j .data -O ihex ./build/avr_ctrl.out ./build/avr_ctrl.hex
 	avrdude -c arduino -p m328p -P /dev/ttyACM0 -U flash:w:./build/avr_ctrl.hex:i
 
+testFLOPS:
+	avr-gcc -mmcu=atmega328p ./test/testFlops.c -o ./build/testFlops.out -Wall
+	avr-objcopy -j .text -j .data -O ihex ./build/testFlops.out ./build/testFlops.hex
+	avrdude -c arduino -p m328p -P /dev/ttyACM0 -U flash:w:./build/testFlops.hex:i
+
+testI2C:
+	avr-gcc -mmcu=atmega328p ./test/twitest.c -o ./build/twitest.out -Wall
+	avr-objcopy -j .text -j .data -O ihex ./build/twitest.out ./build/twitest.hex
+	avrdude -c arduino -p m328p -P /dev/ttyACM0 -U flash:w:./build/twitest.hex:i
