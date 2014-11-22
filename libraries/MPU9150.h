@@ -101,6 +101,7 @@
 #define MPU9150_FIFO_COUNTL			0x73
 #define MPU9150_FIFO_R_W			0x74
 #define MPU9150_WHO_AM_I			0x75
+
 #define MPU9150_MAG_WIA				0x00
 #define MPU9150_MAG_INFO			0x01
 #define MPU9150_MAG_ST1				0x02
@@ -124,6 +125,7 @@
 int accelX, accelY, accelZ;
 int gyroX, gyroY, gyroZ;
 int magX, magY, magZ;
+int temp;
 
 int _i2c_write(uint8_t dest, uint8_t val);
 uint8_t _i2c_read(uint8_t reg);
