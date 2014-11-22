@@ -11,7 +11,10 @@
 FILE uart_str = FDEV_SETUP_STREAM(uart_putchar, uart_getchar, _FDEV_SETUP_RW);
 
 void loop(){
+//	PORTB ^= (1 << PORTB5);
+	PORTB |= (1 << PORTB5);
 	MPU9150_Read();
+	PORTB &= ~(1 << PORTB5);
 	printf("%6i\t%6i\t%6i\t%6i\t%6i\t%6i\t%6i\t%6i\t%6i\n", accelX, accelY, accelZ, gyroX, gyroY, gyroZ, magZ, magY, magZ); 
 	_delay_ms(5);
 
@@ -22,6 +25,7 @@ int main(int argc, char** arvg){
 	stdout = stdin = &uart_str;
 	printf("Beginning...\n");
 	MPU9150_init();
+	DDRB |= 1 << DDB5;
 	while(1){
 		loop();
 	}
