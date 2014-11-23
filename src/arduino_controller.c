@@ -4,6 +4,7 @@
 #include <avr/interrupt.h>
 #include <stdio.h>
 #include <uart.h>
+#include <MPU9150.h>
 
 // Definitions
 #define PITCH_SERVO	D5
@@ -23,7 +24,8 @@
 #define YAW_KD		0
 
 // Global Variables
-struct dcm{
+//struct dcm{
+//}
 
 
 int main(int argc, char** argv){
@@ -63,6 +65,12 @@ int main(int argc, char** argv){
 	int curPitch = 0;
 	int curYaw = 0;
 	int curRoll = 0;
+	MPU9150_init();
+	MPU9150_Read();
+
+	// Calibrate sensor?
+
+	// Initialize DCM matrix
 
 	// configure controller
 	int rollGoal = 0;
