@@ -30,7 +30,7 @@ test:
 	./build/test
 
 testAVRMPU:
-	avr-gcc -mmcu=atmega328p ./test/testMPU9150.c ./libraries/*.c ./libraries/i2cmaster/twimaster.c -Ilibraries -Ilibraries/i2cmaster -o ./build/testAVRMPU.out -Wall -Os
+	avr-gcc -mmcu=atmega328p ./test/testMPU9150.c ./libraries/*.c ./libraries/i2cmaster/twimaster.c -Ilibraries -Ilibraries/i2cmaster -o ./build/testAVRMPU.out -Wall -Os -std=gnu99
 	avr-objcopy -j .text -j .data -O ihex ./build/testAVRMPU.out ./build/testAVRMPU.hex
 	avrdude -c arduino -p m328p -P /dev/ttyACM0 -U flash:w:./build/testAVRMPU.hex:i 
 
@@ -44,7 +44,7 @@ testAVRUART:
 	avrdude -c arduino -p m328p -P /dev/ttyACM0 -U flash:w:./build/testAVRUART.hex:i 
 
 avr_ctrl:
-	avr-gcc -mmcu=atmega328p ./src/arduino_controller.c ./libraries/uart.c ./libraries/MPU9150.c ./libraries/i2cmaster/twimaster.c -Ilibraries -Ilibraries/i2cmaster -o ./build/avr_ctrl.out -Wall -Os
+	avr-gcc -mmcu=atmega328p ./src/arduino_controller.c ./libraries/uart.c ./libraries/MPU9150.c ./libraries/i2cmaster/twimaster.c -Ilibraries -Ilibraries/i2cmaster -o ./build/avr_ctrl.out -Wall -Os -std=gnu99
 	avr-objcopy -j .text -j .data -O ihex ./build/avr_ctrl.out ./build/avr_ctrl.hex
 	avrdude -c arduino -p m328p -P /dev/ttyACM0 -U flash:w:./build/avr_ctrl.hex:i
 
@@ -57,3 +57,8 @@ testI2C:
 	avr-gcc -mmcu=atmega328p ./test/testI2C.c ./libraries/uart.c ./libraries/i2cmaster/twimaster.c -Ilibraries -Ilibraries/i2cmaster -o ./build/twitest.out -Wall
 	avr-objcopy -j .text -j .data -O ihex ./build/twitest.out ./build/twitest.hex
 	avrdude -c arduino -p m328p -P /dev/ttyACM0 -U flash:w:./build/twitest.hex:i
+
+calibrate:
+	avr-gcc -mmcu=atmega328p ./test/calibMPU.c ./libraries/uart.c ./libraries/i2cmaster/twimaster.c ./libraries/MPU9150.c -Ilibraries -Ilibraries/i2cmaster -o ./build/calibrate.out -Wall -std=gnu99
+	avr-objcopy -j .text -j .data -O ihex ./build/calibrate.out ./build/calibrate.hex
+	avrdude -c arduino -p m328p -P /dev/ttyACM0 -U flash:w:./build/calibrate.hex:i
