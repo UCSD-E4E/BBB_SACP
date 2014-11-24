@@ -126,9 +126,18 @@ int accelX, accelY, accelZ;
 int gyroX, gyroY, gyroZ;
 int magX, magY, magZ;
 int temp;
+float delta[6];
+float beta[6];
+float dS[6];
+float JS[6][6];
 
 int _i2c_write(uint8_t dest, uint8_t val);
 uint8_t _i2c_read(uint8_t reg);
 int MPU9150_init();
 int MPU9150_Read();
+int calibrateMPU9150();
+void compute_calibration_matrices(int32_t data[]);
+void update_calibration_matrices(int32_t data[]);
+void reset_calibration_matrices();
+void find_delta();
 #endif

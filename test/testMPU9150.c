@@ -16,7 +16,7 @@ void loop(){
 	MPU9150_Read();
 	PORTB &= ~(1 << PORTB5);
 	printf("%6i\t%6i\t%6i\t%6i\t%6i\t%6i\t%6i\t%6i\t%6i\n", accelX, accelY, accelZ, gyroX, gyroY, gyroZ, magZ, magY, magZ); 
-	_delay_ms(5);
+	_delay_ms(50);
 
 }
 
