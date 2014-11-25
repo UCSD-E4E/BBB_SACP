@@ -127,9 +127,13 @@ int gyroX, gyroY, gyroZ;
 int magX, magY, magZ;
 int temp;
 float delta[6];
-float beta[6];
+int beta[9];	// 0-2 are acc bias, applied to raw acc.  3-5 are acc scale, applied to bias acc.  6-8 are gyro bias, applied to raw
 float dS[6];
 float JS[6][6];
+
+float DCMG[3][3];
+float DCMW[3];	// 0 is gyro, 1 is acc, 2 is mag (not supported), must add to 1
+
 
 int _i2c_write(uint8_t dest, uint8_t val);
 uint8_t _i2c_read(uint8_t reg);
@@ -140,4 +144,9 @@ void compute_calibration_matrices(int32_t data[]);
 void update_calibration_matrices(int32_t data[]);
 void reset_calibration_matrices();
 void find_delta();
+void update_DCM(float t);
+
+double getRoll();
+double getPitch();
+double getYaw();
 #endif

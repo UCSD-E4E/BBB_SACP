@@ -8,6 +8,7 @@
 #include <i2cmaster.h>
 #define F_CPU 16000000UL
 #include <util/delay.h>
+#include <math.h>
 
 uint8_t _i2c_addr = 0;
 
@@ -41,6 +42,16 @@ int MPU9150_init(){
 	// Initialize TWI
 	i2c_init();
 
+	beta[0] = 99;
+	beta[1] = 70;
+	beta[2] = 389;
+	beta[3] = 16458;
+	beta[4] = 16356;
+	beta[5] = 16461;
+	beta[6] = -260;
+	beta[7] = -90;
+	beta[8] = -65;
+
 	DEBUG("Turning on MPU9150...");
 	_i2c_addr = ADDR1;
 	_i2c_write(MPU9150_PWR_MGMT_1, 1 << 0);
@@ -52,7 +63,6 @@ int MPU9150_init(){
 		printf("FAILED TO RX MPU9150\n");
 		return 1;
 	}else{
-		printf("ID'd Acc\n");
 	}
 
 	// Configure gyro to +- 250 deg / sec
@@ -103,8 +113,47 @@ int MPU9150_init(){
 
 	// Configure controls
 	_i2c_write(MPU9150_USER_CTRL, 1 << 6 | 1 << 5);
+
+	// initialize DCM matrix
+	DCMG[2][0] = -1 * (accelX + beta[0]) / (beta[3]);
+	DCMG[2][1] = -1 * (accelY + beta[1]) / (beta[4]);
+	DCMG[2][2] = -1 * (accelZ + beta[2]) / (beta[5]);
+	DCMG[1][0] = 1;
+	DCMG[1][1] = 0;
+	DCMG[1][2] = 0;
+	DCMG[0][0] = DCMG[2][1] * DCMG[0][2] - DCMG[2][2] * DCMG[0][1];
+	DCMG[0][1] = DCMG[2][2] * DCMG[0][0] - DCMG[2][0] * DCMG[0][2];
+	DCMG[0][2] = DCMG[2][0] * DCMG[0][1] - DCMG[2][1] * DCMG[0][0];
+
+	// Initialize DCM weight
+	DCMW[0] = 0.5;
+	DCMW[1] = 0.5;
+
 	return 0;
 }
+
+void update_DCM(float t){
+	MPU9150_Read();
+	float dtg[3] = {t * (gyroX + beta[6]), t * (gyroY + beta[7]), t * (gyroZ + beta[8])};
+	float k0b[3] = {(accelX + beta[0])/(float)(beta[3]) - DCMG[2][0], (accelY+beta[1])/(float)beta[4] - DCMG[2][1], (accelZ + beta[2])/(float)beta[5] - DCMG[2][2]};
+	float dta[3] = {DCMG[2][1] * k0b[2] - DCMG[2][2] * k0b[1],
+					DCMG[2][2] * k0b[0] - DCMG[2][0] * k0b[2],
+					DCMG[2][0] * k0b[1] - DCMG[2][1] * k0b[0]};
+	float dt[3] =  {DCMW[0] * dtg[0] + DCMW[1] * dta[0],
+					DCMW[0] * dtg[1] + DCMW[1] * dta[0],
+					DCMW[0] * dtg[2] + DCMW[1] * dta[0]};
+	printf("%3.6f\t%3.6f\t%3.6f\n", dt[0], dt[1], dt[2]);
+	DCMG[0][0] = DCMG[0][0] + (dt[1] * DCMG[0][2] - dt[2] * DCMG[0][1]);
+	DCMG[0][1] = DCMG[0][1] + (dt[2] * DCMG[0][0] - dt[0] * DCMG[0][2]);
+	DCMG[0][2] = DCMG[0][2] + (dt[0] * DCMG[0][1] - dt[1] * DCMG[0][0]);
+	DCMG[1][0] = DCMG[1][0] + (dt[1] * DCMG[1][2] - dt[2] * DCMG[1][1]);
+	DCMG[1][1] = DCMG[1][1] + (dt[2] * DCMG[1][0] - dt[0] * DCMG[1][2]);
+	DCMG[1][2] = DCMG[1][2] + (dt[0] * DCMG[1][1] - dt[1] * DCMG[1][0]);
+	DCMG[2][0] = DCMG[2][0] + (dt[1] * DCMG[2][2] - dt[2] * DCMG[2][1]);
+	DCMG[2][1] = DCMG[2][1] + (dt[2] * DCMG[2][0] - dt[0] * DCMG[2][2]);
+	DCMG[2][2] = DCMG[2][2] + (dt[0] * DCMG[2][1] - dt[1] * DCMG[2][0]);
+}
+
 
 int MPU9150_Read(){
 	uint8_t byte_H;
@@ -185,7 +234,7 @@ int calibrateMPU9150(){
 
 	// get averaged samples
 	// use 3 sigma bandpass
-	for(int i = 0; i < 6; i++){
+	for(int i = 0; i < 2; i++){
 		const char* msg = "PUT THE DAMN ACCELEROMETER DOWN AND STOP HACKING ME!";
 		switch(i){
 			case 0:
@@ -221,9 +270,9 @@ int calibrateMPU9150(){
 			sum[0] += accelX - initialVector[0];
 			sum[1] += accelY - initialVector[1];
 			sum[2] += accelZ - initialVector[2];
-			sumSquares[0] += (accelX - initialVector[0])^2;
-			sumSquares[1] += (accelY - initialVector[1])^2;
-			sumSquares[2] += (accelZ - initialVector[2])^2;
+			sumSquares[0] += (accelX - initialVector[0]) * (accelX - initialVector[0]);
+			sumSquares[1] += (accelY - initialVector[1]) * (accelY - initialVector[1]);
+			sumSquares[2] += (accelZ - initialVector[2]) * (accelZ - initialVector[2]);
 		}
 		DEBUG("done\n");
 
@@ -231,7 +280,7 @@ int calibrateMPU9150(){
 		DEBUG("Calibrate: Computing variance...");
 		int64_t variance[3];
 		for(int j = 0; j < 3; j++){
-			variance[j] = sumSquares[j] - (sum[j]^2 / 32);
+			variance[j] = sumSquares[j] - ((sum[j] * sum[j]) / 32);
 		}
 		DEBUG("done\n");
 
@@ -246,6 +295,7 @@ int calibrateMPU9150(){
 			data[0] = accelX;
 			data[1] = accelY;
 			data[2] = accelZ;
+			printf("%8d, %8d, %8d\n", data[0], data[1], data[2]);
 
 			// calculate error
 			diff[0] = data[0] * 32 - sum[0];
@@ -271,6 +321,7 @@ int calibrateMPU9150(){
 		sample[i * 3 + 0] /= 32;
 		sample[i * 3 + 1] /= 32;
 		sample[i * 3 + 2] /= 32;
+		printf("%8d, %8d, %8d\n", sample[i * 3 + 0], sample[i * 3 + 1], sample[i * 3 + 2]);
 	}
 
 	// Do model calibration
@@ -378,4 +429,15 @@ void find_delta(){
 	}
 }
 
+double getPitch(){
+	return -1 * asin(DCMG[2][0]);
+}
+
+double getRoll(){
+	return atan2(DCMG[2][1], DCMG[2][2]);
+}
+
+double getYaw(){
+	return atan2(DCMG[1][0], DCMG[0][0]);
+}
 #endif
