@@ -1,10 +1,4 @@
-Beginning...
-Initializing MPU9150...
-Turning on MPU9150...done
-ID'd Acc
-Configuring gyroscope rate...done
-Configuring accelerometer sensitivity...done
-done
+accelX	accelY	accelZ	gyroX	gyroY	gyroZ	magX	magY	magZ
 -16524	  -176	  -904	  -247	  -105	   -92	     0	     0	     0
 -16680	  -216	  -876	  -252	   -81	  -120	     0	     0	     0
 -16620	   -92	  -888	  -245	   -66	  -130	     0	     0	     0
