@@ -51,6 +51,7 @@ int MPU9150_init(){
 	beta[6] = -260;
 	beta[7] = -90;
 	beta[8] = -65;
+	beta[9] = beta[10] = beta[11] = 131;
 
 	DEBUG("Turning on MPU9150...");
 	_i2c_addr = ADDR1;
@@ -114,27 +115,30 @@ int MPU9150_init(){
 	// Configure controls
 	_i2c_write(MPU9150_USER_CTRL, 1 << 6 | 1 << 5);
 
+	MPU9150_Read();
+
 	// initialize DCM matrix
-	DCMG[2][0] = -1 * (accelX + beta[0]) / (beta[3]);
-	DCMG[2][1] = -1 * (accelY + beta[1]) / (beta[4]);
-	DCMG[2][2] = -1 * (accelZ + beta[2]) / (beta[5]);
+	DCMG[2][0] = (accelX + beta[0]) / (float)(beta[3]);
+	DCMG[2][1] = (accelY + beta[1]) / (float)(beta[4]);
+	DCMG[2][2] = (accelZ + beta[2]) / (float)(beta[5]);
 	DCMG[1][0] = 1;
 	DCMG[1][1] = 0;
 	DCMG[1][2] = 0;
-	DCMG[0][0] = DCMG[2][1] * DCMG[0][2] - DCMG[2][2] * DCMG[0][1];
-	DCMG[0][1] = DCMG[2][2] * DCMG[0][0] - DCMG[2][0] * DCMG[0][2];
-	DCMG[0][2] = DCMG[2][0] * DCMG[0][1] - DCMG[2][1] * DCMG[0][0];
+	DCMG[0][0] = DCMG[2][1] * DCMG[1][2] - DCMG[2][2] * DCMG[1][1];
+	DCMG[0][1] = DCMG[2][2] * DCMG[1][0] - DCMG[2][0] * DCMG[1][2];
+	DCMG[0][2] = DCMG[2][0] * DCMG[1][1] - DCMG[2][1] * DCMG[1][0];
+//	printf("%3.6f\t%3.6f\t%3.6f\n%3.6f\t%3.6f\t%3.6f\n%3.6f\t%3.6f\t%3.6f\n", DCMG[0][0], DCMG[0][1], DCMG[0][2], DCMG[1][0], DCMG[1][1], DCMG[1][2], DCMG[2][0], DCMG[2][1], DCMG[2][2]);
 
 	// Initialize DCM weight
-	DCMW[0] = 0.5;
-	DCMW[1] = 0.5;
+	DCMW[0] = 0.75;
+	DCMW[1] = 0.25;
 
 	return 0;
 }
 
 void update_DCM(float t){
 	MPU9150_Read();
-	float dtg[3] = {t * (gyroX + beta[6]), t * (gyroY + beta[7]), t * (gyroZ + beta[8])};
+	float dtg[3] = {t * (gyroX + beta[6]) / (float)(beta[9]), t * (gyroY + beta[7]) / (float)(beta[9]), t * (gyroZ + beta[8]) / (float)(beta[9])};
 	float k0b[3] = {(accelX + beta[0])/(float)(beta[3]) - DCMG[2][0], (accelY+beta[1])/(float)beta[4] - DCMG[2][1], (accelZ + beta[2])/(float)beta[5] - DCMG[2][2]};
 	float dta[3] = {DCMG[2][1] * k0b[2] - DCMG[2][2] * k0b[1],
 					DCMG[2][2] * k0b[0] - DCMG[2][0] * k0b[2],
@@ -142,7 +146,7 @@ void update_DCM(float t){
 	float dt[3] =  {DCMW[0] * dtg[0] + DCMW[1] * dta[0],
 					DCMW[0] * dtg[1] + DCMW[1] * dta[0],
 					DCMW[0] * dtg[2] + DCMW[1] * dta[0]};
-	printf("%3.6f\t%3.6f\t%3.6f\n", dt[0], dt[1], dt[2]);
+	printf("%3.6f\t%3.6f\t%3.6f\n", dtg[0], dtg[1], dtg[2]);
 	DCMG[0][0] = DCMG[0][0] + (dt[1] * DCMG[0][2] - dt[2] * DCMG[0][1]);
 	DCMG[0][1] = DCMG[0][1] + (dt[2] * DCMG[0][0] - dt[0] * DCMG[0][2]);
 	DCMG[0][2] = DCMG[0][2] + (dt[0] * DCMG[0][1] - dt[1] * DCMG[0][0]);

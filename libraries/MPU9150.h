@@ -127,7 +127,7 @@ int gyroX, gyroY, gyroZ;
 int magX, magY, magZ;
 int temp;
 float delta[6];
-int beta[9];	// 0-2 are acc bias, applied to raw acc.  3-5 are acc scale, applied to bias acc.  6-8 are gyro bias, applied to raw
+int beta[12];	// 0-2 are acc bias, applied to raw acc.  3-5 are acc scale, applied to bias acc.  6-8 are gyro bias, applied to raw. 9-11 are gyro scale factor
 float dS[6];
 float JS[6][6];
 

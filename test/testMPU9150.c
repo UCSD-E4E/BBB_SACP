@@ -18,6 +18,7 @@ void loop(){
 	PORTB &= ~(1 << PORTB5);
 //	printf("%6i\t%6i\t%6i\t%6i\t%6i\t%6i\t%6i\t%6i\t%6i\n", accelX, accelY, accelZ, gyroX, gyroY, gyroZ, magZ, magY, magZ); 
 //	printf("%3.6f\t%3.6f\t%3.6f\n", getRoll(), getPitch(), getYaw());
+//	printf("%3.6f\t%3.6f\t%3.6f\n%3.6f\t%3.6f\t%3.6f\n%3.6f\t%3.6f\t%3.6f\n\n", DCMG[0][0], DCMG[0][1], DCMG[0][2], DCMG[1][0], DCMG[1][1], DCMG[1][2], DCMG[2][0], DCMG[2][1], DCMG[2][2]);
 	_delay_ms(15);
 
 }
