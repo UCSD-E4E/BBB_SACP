@@ -12,6 +12,7 @@
 #include <fcntl.h>
 #include <linux/i2c-dev.h>
 #include "MPU9150.h"
+#include <cstdlib>
 using namespace std;
 
 // defines
@@ -49,7 +50,7 @@ int MPU9150::initialize(){
 	char i2cbuf[64] = {0};	// initialize empty buffer
 	i2cbuf[0] = MPU9150_PWR_MGMT_1;
 	i2cbuf[1] = 0x00;
-	if(write(file, i2cbuf, 2) != 1){	// attempt to write 0x00 to 
+	if(write(file, i2cbuf, 2) != 2){	// attempt to write 0x00 to 
 			// MPU9150_PWR_MGMT_1
 		// Failed transaction
 		printf("Failed to write 0x%02hhx to 0x%02hhx at 0x%02x on /dev/i2c-%d\n", i2cbuf[1], 
@@ -87,7 +88,7 @@ int MPU9150::initialize(){
 	// Enable magnetometer
 	i2cbuf[0] = MPU9150_I2C_INT_PIN_CFG;
 	i2cbuf[1] = (1 << 1);	// enable I2C bypass
-	if(write(file, i2cbuf, 2) != 1){	// attempt to write data
+	if(write(file, i2cbuf, 2) != 2){	// attempt to write data
 		// Failed transaction
 		printf("Failed to write 0x%02hhx to 0x%02hhx at 0x%02x on /dev/i2c-%d\n", i2cbuf[1], 
 				i2cbuf[0], I2CAddress, I2CBus);
@@ -109,7 +110,7 @@ int MPU9150::initialize(){
 	
 	i2cbuf[0] = MPU9150_MAG_CNTL;
 	i2cbuf[1] = (1 << 0);	// enable Magnetometer to single measurement
-	if(write(magFile, i2cbuf, 2) != 1){	// attempt to write data
+	if(write(magFile, i2cbuf, 2) != 2){	// attempt to write data
 		// Failed transaction
 		printf("Failed to write 0x%02hhx to 0x%02hhx at 0x%02x on /dev/i2c-%d\n", i2cbuf[1], 
 				i2cbuf[0], I2CAddress, I2CBus);
@@ -150,6 +151,7 @@ int MPU9150::initialize(){
  */
 MPU9150::MPU9150(int bus){
 	I2CBus = bus;
+	I2CAddress = 0x68;
 }
 
 /**
