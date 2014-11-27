@@ -118,44 +118,132 @@ int MPU9150_init(){
 	MPU9150_Read();
 
 	// initialize DCM matrix
+	beta[6] = 0;
+	beta[7] = 0;
+	beta[8] = 0;
+	for(int i = 0; i < 32; i++){
+		MPU9150_Read();
+		beta[6] += gyroX;
+		beta[7] += gyroY;
+		beta[8] += gyroZ;
+	}
+	beta[6] /= -32;
+	beta[7] /= -32;
+	beta[8] /= -32;
 	DCMG[2][0] = (accelX + beta[0]) / (float)(beta[3]);
 	DCMG[2][1] = (accelY + beta[1]) / (float)(beta[4]);
 	DCMG[2][2] = (accelZ + beta[2]) / (float)(beta[5]);
-	DCMG[1][0] = 1;
-	DCMG[1][1] = 0;
-	DCMG[1][2] = 0;
-	DCMG[0][0] = DCMG[2][1] * DCMG[1][2] - DCMG[2][2] * DCMG[1][1];
-	DCMG[0][1] = DCMG[2][2] * DCMG[1][0] - DCMG[2][0] * DCMG[1][2];
-	DCMG[0][2] = DCMG[2][0] * DCMG[1][1] - DCMG[2][1] * DCMG[1][0];
+	DCMG[0][0] = 1;
+	DCMG[0][1] = 0;
+	DCMG[0][2] = 0;
+	DCMG[1][0] = DCMG[2][1] * DCMG[0][2] - DCMG[2][2] * DCMG[0][1];
+	DCMG[1][1] = DCMG[2][2] * DCMG[0][0] - DCMG[2][0] * DCMG[0][2];
+	DCMG[1][2] = DCMG[2][0] * DCMG[0][1] - DCMG[2][1] * DCMG[0][0];
 //	printf("%3.6f\t%3.6f\t%3.6f\n%3.6f\t%3.6f\t%3.6f\n%3.6f\t%3.6f\t%3.6f\n", DCMG[0][0], DCMG[0][1], DCMG[0][2], DCMG[1][0], DCMG[1][1], DCMG[1][2], DCMG[2][0], DCMG[2][1], DCMG[2][2]);
 
 	// Initialize DCM weight
-	DCMW[0] = 0.75;
-	DCMW[1] = 0.25;
+	DCMW[0] = 0.02;
+	DCMW[1] = 0.98;
 
 	return 0;
 }
 
+float _dot(float a[3], float b[3]){
+	return a[0] * b[0] + a[1] * b[1] + a[2] + b[2];
+}
+
+float _mag(float a[3]){
+	return sqrt(a[0] * a[0] + a[1]* a[1] + a[2] * a[2]);
+}
+
+void  _norm(float* a){
+	float mag = _mag(a);
+	a[0] /= mag;
+	a[1] /= mag;
+	a[2] /= mag;
+	return;
+}
+
 void update_DCM(float t){
 	MPU9150_Read();
-	float dtg[3] = {t * (gyroX + beta[6]) / (float)(beta[9]), t * (gyroY + beta[7]) / (float)(beta[9]), t * (gyroZ + beta[8]) / (float)(beta[9])};
-	float k0b[3] = {(accelX + beta[0])/(float)(beta[3]) - DCMG[2][0], (accelY+beta[1])/(float)beta[4] - DCMG[2][1], (accelZ + beta[2])/(float)beta[5] - DCMG[2][2]};
-	float dta[3] = {DCMG[2][1] * k0b[2] - DCMG[2][2] * k0b[1],
-					DCMG[2][2] * k0b[0] - DCMG[2][0] * k0b[2],
-					DCMG[2][0] * k0b[1] - DCMG[2][1] * k0b[0]};
-	float dt[3] =  {DCMW[0] * dtg[0] + DCMW[1] * dta[0],
-					DCMW[0] * dtg[1] + DCMW[1] * dta[0],
-					DCMW[0] * dtg[2] + DCMW[1] * dta[0]};
-	printf("%3.6f\t%3.6f\t%3.6f\n", dtg[0], dtg[1], dtg[2]);
-	DCMG[0][0] = DCMG[0][0] + (dt[1] * DCMG[0][2] - dt[2] * DCMG[0][1]);
-	DCMG[0][1] = DCMG[0][1] + (dt[2] * DCMG[0][0] - dt[0] * DCMG[0][2]);
-	DCMG[0][2] = DCMG[0][2] + (dt[0] * DCMG[0][1] - dt[1] * DCMG[0][0]);
-	DCMG[1][0] = DCMG[1][0] + (dt[1] * DCMG[1][2] - dt[2] * DCMG[1][1]);
-	DCMG[1][1] = DCMG[1][1] + (dt[2] * DCMG[1][0] - dt[0] * DCMG[1][2]);
-	DCMG[1][2] = DCMG[1][2] + (dt[0] * DCMG[1][1] - dt[1] * DCMG[1][0]);
-	DCMG[2][0] = DCMG[2][0] + (dt[1] * DCMG[2][2] - dt[2] * DCMG[2][1]);
-	DCMG[2][1] = DCMG[2][1] + (dt[2] * DCMG[2][0] - dt[0] * DCMG[2][2]);
-	DCMG[2][2] = DCMG[2][2] + (dt[0] * DCMG[2][1] - dt[1] * DCMG[2][0]);
+	float w[3] =   {(gyroX + beta[6]) / (float)beta[9] * M_PI / 180.0,
+					(gyroY + beta[7]) / (float)beta[9] * M_PI / 180.0,
+					(gyroZ + beta[8]) / (float)beta[9] * M_PI / 180.0};
+	float wquat[4] = {-1 * sin(0.5 * w[0]) * sin(0.5 * w[1]) * sin(0.5 * w[2]) + cos(0.5 * w[0]) * cos(0.5 * w[1]) * cos(0.5 * w[2]),
+					   1 * sin(0.5 * w[0]) * cos(0.5 * w[1]) * cos(0.5 * w[2]) + cos(0.5 * w[0]) * sin(0.5 * w[1]) * sin(0.5 * w[2]),
+					  -1 * sin(0.5 * w[0]) * cos(0.5 * w[1]) * sin(0.5 * w[2]) + cos(0.5 * w[0]) * sin(0.5 * w[1]) * cos(0.5 * w[2]),
+					   1 * sin(0.5 * w[0]) * sin(0.5 * w[1]) * cos(0.5 * w[2]) + cos(0.5 * w[0]) * cos(0.5 * w[1]) * sin(0.5 * w[2]),};
+//	float dtg[3] = {t * w[0],
+//					t * w[1], 
+//					t * w[2]};
+	float acc[3] = {(accelX + beta[0]) / (float)beta[3],
+					(accelY + beta[1]) / (float)beta[4],
+					(accelZ + beta[2]) / (float)beta[5]};
+	float arot[3] = {acc[1] * DCMG[2][2] - acc[2] * DCMG[2][1],
+					 acc[2] * DCMG[2][0] - acc[0] * DCMG[2][2], 
+					 acc[0] * DCMG[2][1] - acc[1] * DCMG[2][0]};
+	float ang = acos(_dot(acc, arot) / (_mag(acc) * _mag(arot)));
+	float aquat[4] = {ang,
+					  arot[0],
+					  arot[1],
+					  arot[2]};
+//	float dta[3] = {DCMG[2][1] * dkb[2] - DCMG[2][2] * dkb[1],
+//					DCMG[2][2] * dkb[0] - DCMG[2][0] * dkb[2],
+//					DCMG[2][0] * dkb[1] - DCMG[2][1] * dkb[0]};
+//	float wsum = DCMW[0] + DCMW[1];
+//	float dt[3] =  {(DCMW[0] * dtg[0] + DCMW[1] * dta[0]) / wsum,
+//					(DCMW[0] * dtg[1] + DCMW[1] * dta[1]) / wsum,
+//					(DCMW[0] * dtg[2] + DCMW[1] * dta[2]) / wsum};
+	
+	float squat[4] = {wquat[0] * .98 + aquat[0] * .02,
+					  wquat[1] * .98 + aquat[1] * .02,
+					  wquat[2] * .98 + aquat[2] * .02,
+					  wquat[3] * .98 + aquat[3] * .02};
+
+	float q1 = 0.5 * sqrt(1 + DCMG[0][0] - DCMG[1][1] - DCMG[2][2]); 
+
+	float cquat[4] = {0.5 * sqrt(1 + DCMG[0][0] - DCMG[1][1] - DCMG[2][2]),
+					  0.25 / q1 * (DCMG[0][1] + DCMG[1][0]),
+					  0.25 / q1 * (DCMG[0][2] + DCMG[2][0]),
+					  0.25 / q1 * (DCMG[2][1] - DCMG[1][2])};
+
+	float nquat[4] = {squat[0] * cquat[0] - squat[1] * cquat[1] - squat[2] * cquat[2] - squat[2] * cquat[3],
+					  squat[0] * cquat[1] + squat[1] * cquat[0] + squat[2] * cquat[3] - squat[2] * cquat[2],
+					  squat[0] * cquat[2] - squat[2] * cquat[3] + squat[2] * cquat[0] - squat[3] + cquat[1],
+					  squat[0] * cquat[3] - squat[1] * cquat[2] - squat[2] * cquat[1] + squat[3] * cquat[0]};
+
+//	float DCMA[3][3];
+
+	DCMG[0][0] = 1 - 2 * pow(nquat[1], 2) - 2 * pow(nquat[2], 2);
+	DCMG[0][1] = 2 * (nquat[0] * nquat[1] - nquat[2] * nquat[3]);
+	DCMG[0][2] = 2 * (nquat[0] * nquat[2] + nquat[1] * nquat[3]);
+
+	DCMG[1][0] = 2 * (nquat[0] * nquat[1] + nquat[2] * nquat[3]);
+	DCMG[1][1] = 1 - 2 * pow(nquat[0], 2) - 2 * pow(nquat[2], 2);
+	DCMG[1][2] = 2 * (nquat[1] * nquat[2] - nquat[0] * nquat[3]);
+
+	DCMG[2][0] = 2 * (nquat[0] * nquat[2] - nquat[1] * nquat[3]);
+	DCMG[2][1] = 2 * (nquat[0] * nquat[3] + nquat[1] * nquat[2]);
+	DCMG[2][2] = 1 - 2 * pow(nquat[0], 2) - 2 * pow(nquat[1], 2);
+
+	float err = _dot(DCMG[0], DCMG[1]) / 2;
+	float ib0[3] = {DCMG[0][0],
+					DCMG[0][1],
+					DCMG[0][2]};
+	DCMG[0][0] = DCMG[0][0] - err * DCMG[1][0];	
+	DCMG[0][1] = DCMG[0][1] - err * DCMG[1][1];
+	DCMG[0][2] = DCMG[0][2] - err * DCMG[1][2];
+
+	DCMG[1][0] = DCMG[1][0] - err * ib0[0];
+	DCMG[1][1] = DCMG[1][1] - err * ib0[1];
+	DCMG[1][2] = DCMG[1][2] - err * ib0[2];
+	
+	_norm(DCMG[0]);
+	_norm(DCMG[1]);
+	
+	DCMG[2][0] = DCMG[0][1] * DCMG[1][2] - DCMG[0][2] * DCMG[1][1];
+	DCMG[2][1] = DCMG[0][2] * DCMG[1][0] - DCMG[0][0] * DCMG[1][2];
+	DCMG[2][2] = DCMG[0][0] * DCMG[1][1] - DCMG[0][1] * DCMG[1][0];
 }
 
 
@@ -332,13 +420,19 @@ int calibrateMPU9150(){
 	DEBUG("Calibrate: Beginning model calibration...");
 	int i;
 	float eps = 0.00000001;
-	int num_iteration = 500;
+//	int num_iteration = 500;
 	float change = 100.0;
-	int continueConst = 1;
+//	int continueConst = 1;
 	while(change > eps){
 		compute_calibration_matrices(sample);
 		find_delta();
-		change = delta[0] * delta[0] + delta[0] * delta[0] + delta[1] * delta[1] + delta[2] * delta[2] + delta[3] * delta[3] / (beta[3] * beta[3]) + delta[4] * delta[4] / (beta[4] * beta[4]) + delta[5] * delta[5] / (beta[5] * beta[5]);
+		change = delta[0] * delta[0] + 
+				delta[0] * delta[0] + 
+				delta[1] * delta[1] + 
+				delta[2] * delta[2] + 
+				delta[3] * delta[3] / (beta[3] * beta[3]) + 
+				delta[4] * delta[4] / (beta[4] * beta[4]) + 
+				delta[5] * delta[5] / (beta[5] * beta[5]);
 
 		for( i = 0; i < 6; i++){
 			beta[i] -= delta[i];
@@ -347,9 +441,7 @@ int calibrateMPU9150(){
 		reset_calibration_matrices();
 	}
 	DEBUG("done\n");
-	for(int i = 0; i < 6; i++){
-		printf("beta[%i]: %2.6f\n", i, beta[i]);
-	}
+
 	return 0;
 }
 
