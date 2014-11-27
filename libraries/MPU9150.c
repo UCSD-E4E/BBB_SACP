@@ -142,8 +142,8 @@ int MPU9150_init(){
 //	printf("%3.6f\t%3.6f\t%3.6f\n%3.6f\t%3.6f\t%3.6f\n%3.6f\t%3.6f\t%3.6f\n", DCMG[0][0], DCMG[0][1], DCMG[0][2], DCMG[1][0], DCMG[1][1], DCMG[1][2], DCMG[2][0], DCMG[2][1], DCMG[2][2]);
 
 	// Initialize DCM weight
-	DCMW[0] = 0.02;
-	DCMW[1] = 0.98;
+	CFW[0] = 0.02;
+	CFW[1] = 0.98;
 
 	return 0;
 }
@@ -163,87 +163,71 @@ void  _norm(float* a){
 	a[2] /= mag;
 	return;
 }
+void _mulQuat(float a[4], float b[4], float ret[4]){
+	ret[0] = a[0] * b[0] - a[1] * b[1] - a[2] * b[2] - a[3] * b[3];
+	ret[1] = a[0] * b[1] + a[1] * b[0] + a[2] * b[3] - a[3] * b[2];
+	ret[2] = a[0] * b[2] - a[1] * b[3] + a[2] * b[0] + a[3] * b[1];
+	ret[3] = a[0] * b[3] - a[1] * b[2] - a[2] * b[1] + a[3] * b[0];
+	return;
+}
+
+void _copyQuat(float src[4], float tgt[4]){
+	for(int i = 0; i < 4; i++){
+		tgt[i] = src[i];
+	}
+}
 
 void update_DCM(float t){
 	MPU9150_Read();
-	float w[3] =   {(gyroX + beta[6]) / (float)beta[9] * M_PI / 180.0,
-					(gyroY + beta[7]) / (float)beta[9] * M_PI / 180.0,
-					(gyroZ + beta[8]) / (float)beta[9] * M_PI / 180.0};
-	float wquat[4] = {-1 * sin(0.5 * w[0]) * sin(0.5 * w[1]) * sin(0.5 * w[2]) + cos(0.5 * w[0]) * cos(0.5 * w[1]) * cos(0.5 * w[2]),
-					   1 * sin(0.5 * w[0]) * cos(0.5 * w[1]) * cos(0.5 * w[2]) + cos(0.5 * w[0]) * sin(0.5 * w[1]) * sin(0.5 * w[2]),
-					  -1 * sin(0.5 * w[0]) * cos(0.5 * w[1]) * sin(0.5 * w[2]) + cos(0.5 * w[0]) * sin(0.5 * w[1]) * cos(0.5 * w[2]),
-					   1 * sin(0.5 * w[0]) * sin(0.5 * w[1]) * cos(0.5 * w[2]) + cos(0.5 * w[0]) * cos(0.5 * w[1]) * sin(0.5 * w[2]),};
-//	float dtg[3] = {t * w[0],
-//					t * w[1], 
-//					t * w[2]};
-	float acc[3] = {(accelX + beta[0]) / (float)beta[3],
-					(accelY + beta[1]) / (float)beta[4],
-					(accelZ + beta[2]) / (float)beta[5]};
-	float arot[3] = {acc[1] * DCMG[2][2] - acc[2] * DCMG[2][1],
-					 acc[2] * DCMG[2][0] - acc[0] * DCMG[2][2], 
-					 acc[0] * DCMG[2][1] - acc[1] * DCMG[2][0]};
-	float ang = acos(_dot(acc, arot) / (_mag(acc) * _mag(arot)));
-	float aquat[4] = {ang,
-					  arot[0],
-					  arot[1],
-					  arot[2]};
-//	float dta[3] = {DCMG[2][1] * dkb[2] - DCMG[2][2] * dkb[1],
-//					DCMG[2][2] * dkb[0] - DCMG[2][0] * dkb[2],
-//					DCMG[2][0] * dkb[1] - DCMG[2][1] * dkb[0]};
-//	float wsum = DCMW[0] + DCMW[1];
-//	float dt[3] =  {(DCMW[0] * dtg[0] + DCMW[1] * dta[0]) / wsum,
-//					(DCMW[0] * dtg[1] + DCMW[1] * dta[1]) / wsum,
-//					(DCMW[0] * dtg[2] + DCMW[1] * dta[2]) / wsum};
 	
-	float squat[4] = {wquat[0] * .98 + aquat[0] * .02,
-					  wquat[1] * .98 + aquat[1] * .02,
-					  wquat[2] * .98 + aquat[2] * .02,
-					  wquat[3] * .98 + aquat[3] * .02};
+	// gyroscope rotation quaternion
+	float gyroQuat[4] = {1, 0, 0, 0};
+	float gyroRot[3] = {t * (gyroX + beta[6]) / (float)beta[9] * M_PI / 180,
+						t * (gyroY + beta[7]) / (float)beta[10] * M_PI / 180,
+						t * (gyroZ + beta[8]) / (float)beta[11] * M_PI / 180};
+	float gAng[4] = {cos(gyroRot[0] / 2),
+					  sin(gyroRot[0] / 2),
+					  0,
+					  0};
+	float temp[4];
+	_mulQuat(gyroQuat, gAng, temp);
+	_copyQuat(temp, gyroQuat);
+	gAng[0] = cos(gyroRot[1] / 2);
+	gAng[1] = 0;
+	gAng[2] = sin(gyroRot[1] / 2);
+	gAng[3] = 0;
+	_mulQuat(gyroQuat, gAng, temp);
+	_copyQuat(temp, gyroQuat);
+	gAng[0] = cos(gyroRot[2] / 2);
+	gAng[1] = 0;
+	gAng[2] = 0;
+	gAng[3] = sin(gyroRot[3] / 2);
+	_mulQuat(gyroQuat, gAng, temp);
+	_copyQuat(temp, gyroQuat);
 
-	float q1 = 0.5 * sqrt(1 + DCMG[0][0] - DCMG[1][1] - DCMG[2][2]); 
+	//Accelerometer
+	float newAcc[3] = {(accelX + beta[0]) / (float)beta[3],
+					   (accelY + beta[1]) / (float)beta[4],
+					   (accelZ + beta[2]) / (float)beta[5]};
+	_norm(newAcc);
+	float accQuat[4];
+	accQuat[0] = acos(_dot(newAcc, _prevAcc));
+	accQuat[1] = newAcc[1] * _prevAcc[2] - newAcc[2] * _prevAcc[1];
+	accQuat[2] = newAcc[2] * _prevAcc[0] - newAcc[0] * _prevAcc[2];
+	accQuat[3] = newAcc[0] * _prevAcc[1] - newAcc[1] * _prevAcc[0];
+	_norm(accQuat + 1);
 
-	float cquat[4] = {0.5 * sqrt(1 + DCMG[0][0] - DCMG[1][1] - DCMG[2][2]),
-					  0.25 / q1 * (DCMG[0][1] + DCMG[1][0]),
-					  0.25 / q1 * (DCMG[0][2] + DCMG[2][0]),
-					  0.25 / q1 * (DCMG[2][1] - DCMG[1][2])};
-
-	float nquat[4] = {squat[0] * cquat[0] - squat[1] * cquat[1] - squat[2] * cquat[2] - squat[2] * cquat[3],
-					  squat[0] * cquat[1] + squat[1] * cquat[0] + squat[2] * cquat[3] - squat[2] * cquat[2],
-					  squat[0] * cquat[2] - squat[2] * cquat[3] + squat[2] * cquat[0] - squat[3] + cquat[1],
-					  squat[0] * cquat[3] - squat[1] * cquat[2] - squat[2] * cquat[1] + squat[3] * cquat[0]};
-
-//	float DCMA[3][3];
-
-	DCMG[0][0] = 1 - 2 * pow(nquat[1], 2) - 2 * pow(nquat[2], 2);
-	DCMG[0][1] = 2 * (nquat[0] * nquat[1] - nquat[2] * nquat[3]);
-	DCMG[0][2] = 2 * (nquat[0] * nquat[2] + nquat[1] * nquat[3]);
-
-	DCMG[1][0] = 2 * (nquat[0] * nquat[1] + nquat[2] * nquat[3]);
-	DCMG[1][1] = 1 - 2 * pow(nquat[0], 2) - 2 * pow(nquat[2], 2);
-	DCMG[1][2] = 2 * (nquat[1] * nquat[2] - nquat[0] * nquat[3]);
-
-	DCMG[2][0] = 2 * (nquat[0] * nquat[2] - nquat[1] * nquat[3]);
-	DCMG[2][1] = 2 * (nquat[0] * nquat[3] + nquat[1] * nquat[2]);
-	DCMG[2][2] = 1 - 2 * pow(nquat[0], 2) - 2 * pow(nquat[1], 2);
-
-	float err = _dot(DCMG[0], DCMG[1]) / 2;
-	float ib0[3] = {DCMG[0][0],
-					DCMG[0][1],
-					DCMG[0][2]};
-	DCMG[0][0] = DCMG[0][0] - err * DCMG[1][0];	
-	DCMG[0][1] = DCMG[0][1] - err * DCMG[1][1];
-	DCMG[0][2] = DCMG[0][2] - err * DCMG[1][2];
-
-	DCMG[1][0] = DCMG[1][0] - err * ib0[0];
-	DCMG[1][1] = DCMG[1][1] - err * ib0[1];
-	DCMG[1][2] = DCMG[1][2] - err * ib0[2];
+	_prevAcc[0] = newAcc[0];
+	_prevAcc[1] = newAcc[1];
+	_prevAcc[2] = newAcc[2];
 	
-	_norm(DCMG[0]);
-	_norm(DCMG[1]);
-	
-	DCMG[2][0] = DCMG[0][1] * DCMG[1][2] - DCMG[0][2] * DCMG[1][1];
-	DCMG[2][1] = DCMG[0][2] * DCMG[1][0] - DCMG[0][0] * DCMG[1][2];
-	DCMG[2][2] = DCMG[0][0] * DCMG[1][1] - DCMG[0][1] * DCMG[1][0];
+	// Complementary Filter
+	float rotQuat[4] = {CFW[0] * gyroQuat[0] + CFW[1] * accQuat[0],
+						CFW[0] * gyroQuat[1] + CFW[1] * accQuat[1],
+						CFW[0] * gyroQuat[2] + CFW[1] * accQuat[2],
+						CFW[0] * gyroQuat[3] + CFW[1] * accQuat[3]};
+	_mulQuat(globalQuat, rotQuat, temp);
+	_copyQuat(temp, globalQuat);
 }
 
 
@@ -525,15 +509,18 @@ void find_delta(){
 	}
 }
 
-double getPitch(){
-	return -1 * asin(DCMG[2][0]);
+float getRoll(){
+//	return -1 * asin(DCMG[2][0]);
+	return 180 / M_PI * atan2(2 * (globalQuat[0] * globalQuat[3] + globalQuat[1] * globalQuat[2]), pow(globalQuat[0], 2) + pow(globalQuat[1], 2) - pow(globalQuat[2], 2) - pow(globalQuat[3], 2));
 }
 
-double getRoll(){
-	return atan2(DCMG[2][1], DCMG[2][2]);
+float getPitch(){
+//	return atan2(DCMG[2][1], DCMG[2][2]);
+	return -180 / M_PI * asin(2 * (globalQuat[1] * globalQuat[3] - globalQuat[0] * globalQuat[2]));
 }
 
-double getYaw(){
-	return atan2(DCMG[1][0], DCMG[0][0]);
+float getYaw(){
+//	return atan2(DCMG[1][0], DCMG[0][0]);
+	return 180 / M_PI * atan2(2 * (globalQuat[0] * globalQuat[1] + globalQuat[2] * globalQuat[3]), pow(globalQuat[0], 2) - pow(globalQuat[1], 2) - pow(globalQuat[2], 2) + pow(globalQuat[3], 2));
 }
 #endif

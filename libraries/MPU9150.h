@@ -132,7 +132,10 @@ float dS[6];
 float JS[6][6];
 
 float DCMG[3][3];
-float DCMW[3];	// 0 is gyro, 1 is acc, 2 is mag (not supported), must add to 1
+float CFW[3];	// 0 is gyro, 1 is acc, 2 is mag (not supported), must add to 1
+float globalQuat[4];
+
+float _prevAcc[3];
 
 
 int _i2c_write(uint8_t dest, uint8_t val);
@@ -146,7 +149,7 @@ void reset_calibration_matrices();
 void find_delta();
 void update_DCM(float t);
 
-double getRoll();
-double getPitch();
-double getYaw();
+float getRoll();
+float getPitch();
+float getYaw();
 #endif
