@@ -15,11 +15,11 @@ float max[3];
 float mean[3];
 
 void loop(){
-	PORTB ^= (1 << PORTB5);
-//	PORTB |= (1 << PORTB5);
+//	PORTB ^= (1 << PORTB5);
+	PORTB |= (1 << PORTB5);
 	update_DCM(0.02160);
 //	MPU9150_Read();
-//	PORTB &= ~(1 << PORTB5);
+	PORTB &= ~(1 << PORTB5);
 //	printf("%3.1f\t%3.1f\t%3.1f\t%3.1f\t%3.1f\t%3.1f\t%3.1f\t%3.1f\t%3.1f\n", 
 //			(accelX + beta[0]) / (float)beta[3],
 //			(accelY + beta[1]) / (float)beta[4],
@@ -30,7 +30,7 @@ void loop(){
 //			(magZ),
 //			(magY),
 //			(magZ)); 
-	printf("%3.6f\t%3.6f\t%3.6f\n", getRoll(), getPitch(), getYaw());
+	printf("%3.3f\t%3.3f\t%3.3f\n", getRoll(), getPitch(), getYaw());
 //	printf("%3.6f\t%3.6f\t%3.6f\n%3.6f\t%3.6f\t%3.6f\n%3.6f\t%3.6f\t%3.6f\n\n", DCMG[0][0], DCMG[0][1], DCMG[0][2], DCMG[1][0], DCMG[1][1], DCMG[1][2], DCMG[2][0], DCMG[2][1], DCMG[2][2]);
 //	if(min[0] > (gyroX + beta[6])){
 //		min[0] = gyroX + beta[6];
@@ -73,7 +73,7 @@ void loop(){
 
 int main(int argc, char** arvg){
 	uart_init();
-	stdout = stdin = &uart_str;
+	stderr = stdout = stdin = &uart_str;
 	printf("Beginning...\n");
 	MPU9150_init();
 	DDRB |= 1 << DDB5;
