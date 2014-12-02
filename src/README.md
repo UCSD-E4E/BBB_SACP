@@ -5,10 +5,10 @@
 
 ## Command Protocol
 * Set setpoint
-* * SETPOINT RRR PPP YYY
-* * * RRR is the rotation around the roll axis in integer degrees from [0, 360), zero-padded to three digits.
-* * * PPP is the rotation around the pitch axis in integer degrees from [0, 360), zero-padded to three digits.
-* * * YYY is the rotation around the yaw axis in integer degres from [0, 360), zero-padded to three digits.
+* * 001 RRR PPP YYY
+* * * RRR is the rotation around the roll axis in integer degrees from [-25, 25], zero-padded to three digits.
+* * * PPP is the rotation around the pitch axis in integer degrees from [-85, 85], zero-padded to three digits.
+* * * YYY is the rotation around the yaw axis in integer degres from [0, 360], zero-padded to three digits.
 * Enable/disable stabilization
-* * STABILIZATION X
+* * 002 X
 * * * X is the stabilization flag.  Set X to 1 if enable stabilization, 0 otherwise.
