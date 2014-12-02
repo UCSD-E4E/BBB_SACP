@@ -10,7 +10,21 @@
 #include <util/delay.h>
 #include <math.h>
 
+// global variables
 uint8_t _i2c_addr = 0;
+int i, j = 0;
+float newAcc[3] = {0};
+float __mag;
+float halfAngAcc = 0;
+float halfAngle[3][2] = {0};
+float gyroQuat[4] = {1, 0, 0, 0};
+float gyroRot[3] = {0};
+float accQuat[4];
+float rotQuat[4] = {0};
+float tempQuat[4] = {0};
+uint8_t byte_H;
+uint8_t byte_L;
+float _prevAcc[3] = {0, 0, 1};
 
 int _i2c_write(uint8_t dest, uint8_t val){
 	i2c_start_wait(_i2c_addr << 1);
@@ -37,21 +51,40 @@ uint8_t _i2c_read(uint8_t reg){
 	return ret;
 }
 
+float _mag(float a[3]){
+	return sqrt(a[0] * a[0] + a[1]* a[1] + a[2] * a[2]);
+}
+
+float _mag4(float a[4]){
+	return sqrt(a[0] * a[0] + a[1]* a[1] + a[2] * a[2] + a[3] * a[3]);
+}
+
+void  _norm(float* a){
+	__mag = _mag(a);
+	a[0] /= __mag;
+	a[1] /= __mag;
+	a[2] /= __mag;
+	return;
+}
+
+void  _norm4(float* a){
+	__mag = _mag(a);
+	a[0] /= __mag;
+	a[1] /= __mag;
+	a[2] /= __mag;
+	a[3] /= __mag;
+	return;
+}
+
+float _dot(float a[3], float b[3]){
+	return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+
 int MPU9150_init(){
 	DEBUG("Initializing MPU9150...\n");
 	// Initialize TWI
 	i2c_init();
 
-	beta[0] = 99;
-	beta[1] = 70;
-	beta[2] = 389;
-	beta[3] = 16458;
-	beta[4] = 16356;
-	beta[5] = 16461;
-	beta[6] = -260;
-	beta[7] = -90;
-	beta[8] = -65;
-	beta[9] = beta[10] = beta[11] = 131;
 
 	DEBUG("Turning on MPU9150...");
 	_i2c_addr = ADDR1;
@@ -91,10 +124,10 @@ int MPU9150_init(){
 	DEBUG("Activated Mag!\n");
 	id = _i2c_read(MPU9150_MAG_WIA);
 	if(id != 0x48){
-		printf("Failed to contact Mag!\n");
-		return 1;
+	printf("Failed to contact Mag!\n");
+	return 1;
 	}else{
-		printf("ID'd Mag!\n");
+	printf("ID'd Mag!\n");
 	}*/
 	_i2c_addr = ADDR1;
 	DEBUG("done\n");
@@ -118,10 +151,17 @@ int MPU9150_init(){
 	MPU9150_Read();
 
 	// initialize DCM matrix
+	beta[0] = 99;
+	beta[1] = 70;
+	beta[2] = 389;
+	beta[3] = 16458;
+	beta[4] = 16356;
+	beta[5] = 16461;
+	beta[9] = beta[10] = beta[11] = 131;
 	beta[6] = 0;
 	beta[7] = 0;
 	beta[8] = 0;
-	for(int i = 0; i < 32; i++){
+	for(i = 0; i < 32; i++){
 		MPU9150_Read();
 		beta[6] += gyroX;
 		beta[7] += gyroY;
@@ -130,16 +170,25 @@ int MPU9150_init(){
 	beta[6] /= -32;
 	beta[7] /= -32;
 	beta[8] /= -32;
-	DCMG[2][0] = (accelX + beta[0]) / (float)(beta[3]);
-	DCMG[2][1] = (accelY + beta[1]) / (float)(beta[4]);
-	DCMG[2][2] = (accelZ + beta[2]) / (float)(beta[5]);
-	DCMG[0][0] = 1;
-	DCMG[0][1] = 0;
-	DCMG[0][2] = 0;
-	DCMG[1][0] = DCMG[2][1] * DCMG[0][2] - DCMG[2][2] * DCMG[0][1];
-	DCMG[1][1] = DCMG[2][2] * DCMG[0][0] - DCMG[2][0] * DCMG[0][2];
-	DCMG[1][2] = DCMG[2][0] * DCMG[0][1] - DCMG[2][1] * DCMG[0][0];
-//	printf("%3.6f\t%3.6f\t%3.6f\n%3.6f\t%3.6f\t%3.6f\n%3.6f\t%3.6f\t%3.6f\n", DCMG[0][0], DCMG[0][1], DCMG[0][2], DCMG[1][0], DCMG[1][1], DCMG[1][2], DCMG[2][0], DCMG[2][1], DCMG[2][2]);
+
+	newAcc[0] = (accelX + beta[0]) / (float)beta[3];
+	newAcc[1] = (accelY + beta[1]) / (float)beta[4];
+	newAcc[2] = (accelZ + beta[2]) / (float)beta[5];
+	_norm(newAcc);
+
+	halfAngAcc = acos(_dot(newAcc, _prevAcc)) / 2;
+
+	globalQuat[0] = cos(halfAngAcc);
+	globalQuat[1] = (newAcc[1] * _prevAcc[2] - newAcc[2] * _prevAcc[1]) * sin(halfAngAcc);
+	globalQuat[2] = (newAcc[2] * _prevAcc[0] - newAcc[0] * _prevAcc[2]) * sin(halfAngAcc);
+	globalQuat[3] = (newAcc[0] * _prevAcc[1] - newAcc[1] * _prevAcc[0]) * sin(halfAngAcc);
+
+	_norm4(globalQuat);
+
+	for(i = 0; i< 4; i++){
+		printf("%3.3f\t", globalQuat[i]);
+	}
+	printf("\n");
 
 	// Initialize DCM weight
 	CFW[0] = 0.02;
@@ -148,93 +197,82 @@ int MPU9150_init(){
 	return 0;
 }
 
-float _dot(float a[3], float b[3]){
-	return a[0] * b[0] + a[1] * b[1] + a[2] + b[2];
-}
-
-float _mag(float a[3]){
-	return sqrt(a[0] * a[0] + a[1]* a[1] + a[2] * a[2]);
-}
-
-void  _norm(float* a){
-	float mag = _mag(a);
-	a[0] /= mag;
-	a[1] /= mag;
-	a[2] /= mag;
-	return;
-}
-void _mulQuat(float a[4], float b[4], float ret[4]){
-	ret[0] = a[0] * b[0] - a[1] * b[1] - a[2] * b[2] - a[3] * b[3];
-	ret[1] = a[0] * b[1] + a[1] * b[0] + a[2] * b[3] - a[3] * b[2];
-	ret[2] = a[0] * b[2] - a[1] * b[3] + a[2] * b[0] + a[3] * b[1];
-	ret[3] = a[0] * b[3] - a[1] * b[2] - a[2] * b[1] + a[3] * b[0];
+void _mulQuat(float* a, float* b, float* ret){
+	ret[0] = (a[0] * b[0]) - (a[1] * b[1]) - (a[2] * b[2]) - (a[3] * b[3]);
+	ret[1] = (a[0] * b[1]) + (a[1] * b[0]) + (a[2] * b[3]) - (a[3] * b[2]);
+	ret[2] = (a[0] * b[2]) - (a[1] * b[3]) + (a[2] * b[0]) + (a[3] * b[1]);
+	ret[3] = (a[0] * b[3]) + (a[1] * b[2]) - (a[2] * b[1]) + (a[3] * b[0]);
 	return;
 }
 
-void _copyQuat(float src[4], float tgt[4]){
-	for(int i = 0; i < 4; i++){
+void _copyQuat(float* src, float* tgt){
+	for(i = 0; i < 4; i++){
 		tgt[i] = src[i];
 	}
+	return;
 }
 
 void update_DCM(float t){
 	MPU9150_Read();
-	
+
 	// gyroscope rotation quaternion
-	float gyroQuat[4] = {1, 0, 0, 0};
-	float gyroRot[3] = {t * (gyroX + beta[6]) / (float)beta[9] * M_PI / 180,
-						t * (gyroY + beta[7]) / (float)beta[10] * M_PI / 180,
-						t * (gyroZ + beta[8]) / (float)beta[11] * M_PI / 180};
-	float gAng[4] = {cos(gyroRot[0] / 2),
-					  sin(gyroRot[0] / 2),
-					  0,
-					  0};
-	float temp[4];
-	_mulQuat(gyroQuat, gAng, temp);
-	_copyQuat(temp, gyroQuat);
-	gAng[0] = cos(gyroRot[1] / 2);
-	gAng[1] = 0;
-	gAng[2] = sin(gyroRot[1] / 2);
-	gAng[3] = 0;
-	_mulQuat(gyroQuat, gAng, temp);
-	_copyQuat(temp, gyroQuat);
-	gAng[0] = cos(gyroRot[2] / 2);
-	gAng[1] = 0;
-	gAng[2] = 0;
-	gAng[3] = sin(gyroRot[3] / 2);
-	_mulQuat(gyroQuat, gAng, temp);
-	_copyQuat(temp, gyroQuat);
+	gyroRot[0] = t * (gyroX + beta[6]) / (float)beta[9] * M_PI / 180;
+	gyroRot[1] = t * (gyroY + beta[7]) / (float)beta[10] * M_PI / 180;
+	gyroRot[2] = t * (gyroZ + beta[8]) / (float)beta[11] * M_PI / 180;
+
+	halfAngle[0][0] = cos(gyroRot[0] / 2);
+	halfAngle[1][0] = cos(gyroRot[1] / 2);
+	halfAngle[2][0] = cos(gyroRot[2] / 2);
+	halfAngle[0][1] = sin(gyroRot[0] / 2);
+	halfAngle[1][1] = sin(gyroRot[1] / 2);
+	halfAngle[2][1] = sin(gyroRot[2] / 2);
+
+	gyroQuat[0] = halfAngle[0][0] * halfAngle[1][0] * halfAngle[2][0] + halfAngle[0][1] * halfAngle[1][1] * halfAngle[2][1];
+	gyroQuat[1] = halfAngle[0][1] * halfAngle[1][0] * halfAngle[2][0] - halfAngle[0][0] * halfAngle[1][1] * halfAngle[2][1];
+	gyroQuat[2] = halfAngle[0][0] * halfAngle[1][1] * halfAngle[2][0] + halfAngle[0][1] * halfAngle[1][0] * halfAngle[2][1];
+	gyroQuat[3] = halfAngle[0][0] * halfAngle[1][0] * halfAngle[2][1] - halfAngle[0][1] * halfAngle[1][1] * halfAngle[2][0];
 
 	//Accelerometer
-	float newAcc[3] = {(accelX + beta[0]) / (float)beta[3],
-					   (accelY + beta[1]) / (float)beta[4],
-					   (accelZ + beta[2]) / (float)beta[5]};
+	newAcc[0] = (accelX + beta[0]) / (float)beta[3];
+	newAcc[1] = (accelY + beta[1]) / (float)beta[4];
+	newAcc[2] = (accelZ + beta[2]) / (float)beta[5];
 	_norm(newAcc);
-	float accQuat[4];
-	accQuat[0] = acos(_dot(newAcc, _prevAcc));
-	accQuat[1] = newAcc[1] * _prevAcc[2] - newAcc[2] * _prevAcc[1];
-	accQuat[2] = newAcc[2] * _prevAcc[0] - newAcc[0] * _prevAcc[2];
-	accQuat[3] = newAcc[0] * _prevAcc[1] - newAcc[1] * _prevAcc[0];
-	_norm(accQuat + 1);
+
+	halfAngAcc = acos(_dot(newAcc, _prevAcc)) / 2;
+
+	accQuat[0] = cos(halfAngAcc);
+	accQuat[1] = (newAcc[1] * _prevAcc[2] - newAcc[2] * _prevAcc[1]) * sin(halfAngAcc);
+	accQuat[2] = (newAcc[2] * _prevAcc[0] - newAcc[0] * _prevAcc[2]) * sin(halfAngAcc);
+	accQuat[3] = (newAcc[0] * _prevAcc[1] - newAcc[1] * _prevAcc[0]) * sin(halfAngAcc);
+//	_norm(accQuat + 1);
 
 	_prevAcc[0] = newAcc[0];
 	_prevAcc[1] = newAcc[1];
 	_prevAcc[2] = newAcc[2];
-	
+
 	// Complementary Filter
-	float rotQuat[4] = {CFW[0] * gyroQuat[0] + CFW[1] * accQuat[0],
-						CFW[0] * gyroQuat[1] + CFW[1] * accQuat[1],
-						CFW[0] * gyroQuat[2] + CFW[1] * accQuat[2],
-						CFW[0] * gyroQuat[3] + CFW[1] * accQuat[3]};
-	_mulQuat(globalQuat, rotQuat, temp);
-	_copyQuat(temp, globalQuat);
+	rotQuat[0] = CFW[0] * gyroQuat[0] + CFW[1] * accQuat[0];
+	rotQuat[1] = CFW[0] * gyroQuat[1] + CFW[1] * accQuat[1];
+	rotQuat[2] = CFW[0] * gyroQuat[2] + CFW[1] * accQuat[2];
+	rotQuat[3] = CFW[0] * gyroQuat[3] + CFW[1] * accQuat[3];
+//	_norm4(rotQuat);
+	_mulQuat(globalQuat, rotQuat, tempQuat);
+	_copyQuat(tempQuat, globalQuat);
+
+
+//	for(i = 0; i < 4; i++){
+//		printf("%3.3f\t", gyroQuat[i]);
+//	}
+//	printf("\n");
+//	
+//	for(i = 0; i < 4; i++){
+//		printf("%3.3f\t", accQuat[i]);
+//	}
+//	printf("\n\n");
+
 }
 
-
 int MPU9150_Read(){
-	uint8_t byte_H;
-	uint8_t byte_L;
-
 	_i2c_addr = ADDR1;
 
 	// accelX
@@ -282,24 +320,24 @@ int MPU9150_Read(){
 	// Activate measurement
 	_i2c_write(MPU9150_MAG_CNTL, 1);
 	if(_i2c_read(MPU9150_MAG_ST1)){
-		// magX
-		i2c_start_wait(_i2c_addr << 1);	// SLA+W
-		i2c_write(MPU9150_MAG_HXL);	// write start reg
-		i2c_rep_start((_i2c_addr << 1) + 1);
-		byte_L = i2c_readAck();
-		byte_H = i2c_readAck();
-		magX = byte_H << 8 | byte_L;
+	// magX
+	i2c_start_wait(_i2c_addr << 1);	// SLA+W
+	i2c_write(MPU9150_MAG_HXL);	// write start reg
+	i2c_rep_start((_i2c_addr << 1) + 1);
+	byte_L = i2c_readAck();
+	byte_H = i2c_readAck();
+	magX = byte_H << 8 | byte_L;
 
-		// magY
-		byte_L = i2c_readAck();
-		byte_H = i2c_readAck();
-		magY = byte_H << 8 | byte_L;
+	// magY
+	byte_L = i2c_readAck();
+	byte_H = i2c_readAck();
+	magY = byte_H << 8 | byte_L;
 
-		// magZ
-		byte_L = i2c_readAck();
-		byte_H = i2c_readNak();
-		i2c_stop();
-		magZ = byte_H << 8 | byte_L;
+	// magZ
+	byte_L = i2c_readAck();
+	byte_H = i2c_readNak();
+	i2c_stop();
+	magZ = byte_H << 8 | byte_L;
 	}*/
 	_i2c_addr = ADDR1;
 	return 0;
@@ -404,19 +442,19 @@ int calibrateMPU9150(){
 	DEBUG("Calibrate: Beginning model calibration...");
 	int i;
 	float eps = 0.00000001;
-//	int num_iteration = 500;
+	//	int num_iteration = 500;
 	float change = 100.0;
-//	int continueConst = 1;
+	//	int continueConst = 1;
 	while(change > eps){
 		compute_calibration_matrices(sample);
 		find_delta();
 		change = delta[0] * delta[0] + 
-				delta[0] * delta[0] + 
-				delta[1] * delta[1] + 
-				delta[2] * delta[2] + 
-				delta[3] * delta[3] / (beta[3] * beta[3]) + 
-				delta[4] * delta[4] / (beta[4] * beta[4]) + 
-				delta[5] * delta[5] / (beta[5] * beta[5]);
+			delta[0] * delta[0] + 
+			delta[1] * delta[1] + 
+			delta[2] * delta[2] + 
+			delta[3] * delta[3] / (beta[3] * beta[3]) + 
+			delta[4] * delta[4] / (beta[4] * beta[4]) + 
+			delta[5] * delta[5] / (beta[5] * beta[5]);
 
 		for( i = 0; i < 6; i++){
 			beta[i] -= delta[i];
@@ -510,17 +548,17 @@ void find_delta(){
 }
 
 float getRoll(){
-//	return -1 * asin(DCMG[2][0]);
+	//	return -1 * asin(DCMG[2][0]);
 	return 180 / M_PI * atan2(2 * (globalQuat[0] * globalQuat[3] + globalQuat[1] * globalQuat[2]), pow(globalQuat[0], 2) + pow(globalQuat[1], 2) - pow(globalQuat[2], 2) - pow(globalQuat[3], 2));
 }
 
 float getPitch(){
-//	return atan2(DCMG[2][1], DCMG[2][2]);
+	//	return atan2(DCMG[2][1], DCMG[2][2]);
 	return -180 / M_PI * asin(2 * (globalQuat[1] * globalQuat[3] - globalQuat[0] * globalQuat[2]));
 }
 
 float getYaw(){
-//	return atan2(DCMG[1][0], DCMG[0][0]);
+	//	return atan2(DCMG[1][0], DCMG[0][0]);
 	return 180 / M_PI * atan2(2 * (globalQuat[0] * globalQuat[1] + globalQuat[2] * globalQuat[3]), pow(globalQuat[0], 2) - pow(globalQuat[1], 2) - pow(globalQuat[2], 2) + pow(globalQuat[3], 2));
 }
 #endif

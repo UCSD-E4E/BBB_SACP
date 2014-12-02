@@ -131,12 +131,8 @@ int beta[12];	// 0-2 are acc bias, applied to raw acc.  3-5 are acc scale, appli
 float dS[6];
 float JS[6][6];
 
-float DCMG[3][3];
 float CFW[3];	// 0 is gyro, 1 is acc, 2 is mag (not supported), must add to 1
 float globalQuat[4];
-
-float _prevAcc[3];
-
 
 int _i2c_write(uint8_t dest, uint8_t val);
 uint8_t _i2c_read(uint8_t reg);
@@ -152,4 +148,6 @@ void update_DCM(float t);
 float getRoll();
 float getPitch();
 float getYaw();
+
+void _mulQuat(float a[4], float b[4], float ret[4]);
 #endif
