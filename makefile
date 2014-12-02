@@ -62,3 +62,10 @@ calibrate:
 	avr-gcc -mmcu=atmega328p ./test/calibMPU.c ./libraries/uart.c ./libraries/i2cmaster/twimaster.c ./libraries/MPU9150.c -Ilibraries -Ilibraries/i2cmaster -o ./build/calibrate.out -Wall -std=gnu99
 	avr-objcopy -j .text -j .data -O ihex ./build/calibrate.out ./build/calibrate.hex
 	avrdude -c arduino -p m328p -P /dev/ttyACM0 -U flash:w:./build/calibrate.hex:i
+
+testQuat:
+	avr-gcc -mmcu=atmega328p ./test/testQuat.c ./libraries/*.c ./libraries/i2cmaster/twimaster.c -Ilibraries -Ilibraries/i2cmaster -o ./build/testAVRMPU.out -Wall -Os -std=gnu99 -Wl,-u,vfprintf -lprintf_flt -lm
+	avr-objcopy -j .text -j .data -O ihex ./build/testAVRMPU.out ./build/testAVRMPU.hex
+	avrdude -c arduino -p m328p -P /dev/ttyACM0 -U flash:w:./build/testAVRMPU.hex:i 
+
+
