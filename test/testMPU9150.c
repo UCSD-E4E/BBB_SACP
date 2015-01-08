@@ -17,7 +17,7 @@ float mean[3];
 void loop(){
 //	PORTB ^= (1 << PORTB5);
 	PORTB |= (1 << PORTB5);
-	update_DCM(0.02160);
+	update_DCM(0.03660);
 //	MPU9150_Read();
 	PORTB &= ~(1 << PORTB5);
 //	printf("%3.1f\t%3.1f\t%3.1f\t%3.1f\t%3.1f\t%3.1f\t%3.1f\t%3.1f\t%3.1f\n", 
@@ -67,7 +67,7 @@ void loop(){
 //		max[2] = mean[2];
 //	printf("%3.6f\t%3.6f\t%3.6f\n", mean[0], mean[1], mean[2]);
 //	printf("%3.2f\t%3.2f\t\t%3.2f\t%3.2f\t\t%3.2f\t%3.2f\n", min[0], max[0], min[1], max[1], min[2], max[2]);
-	_delay_ms(15);
+	_delay_ms(30);
 
 }
 
