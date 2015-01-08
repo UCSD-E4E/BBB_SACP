@@ -138,7 +138,6 @@
 #include <i2cmaster.h>
 #include <math.h>
 #include <stdio.h>
-// #include <util/delay.h>
 
 //////////////////////
 // Global Variables //
