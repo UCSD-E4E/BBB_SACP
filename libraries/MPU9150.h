@@ -122,32 +122,12 @@
 #define MPU9150_MAG_ASAY			0x11
 #define MPU9150_MAG_ASAZ			0x12
 
-int accelX, accelY, accelZ;
-int gyroX, gyroY, gyroZ;
-int magX, magY, magZ;
-int temp;
-float delta[6];
-int beta[12];	// 0-2 are acc bias, applied to raw acc.  3-5 are acc scale, applied to bias acc.  6-8 are gyro bias, applied to raw. 9-11 are gyro scale factor
-float dS[6];
-float JS[6][6];
-
-float CFW[3];	// 0 is gyro, 1 is acc, 2 is mag (not supported), must add to 1
-float globalQuat[4];
-
-int _i2c_write(uint8_t dest, uint8_t val);
-uint8_t _i2c_read(uint8_t reg);
 int MPU9150_init();
 int MPU9150_Read();
-int calibrateMPU9150();
-void compute_calibration_matrices(int32_t data[]);
-void update_calibration_matrices(int32_t data[]);
-void reset_calibration_matrices();
-void find_delta();
-void update_DCM(float t);
+void update_DCM(double t);
 
-float getRoll();
-float getPitch();
-float getYaw();
+double getRoll();
+double getPitch();
+double getYaw();
 
-void _mulQuat(float a[4], float b[4], float ret[4]);
 #endif
