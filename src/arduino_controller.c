@@ -1,4 +1,12 @@
-// Includes
+/**
+ * Arduino Controller
+ *
+ * @author NATHAN HUI
+ */
+
+//////////////
+// Includes //
+//////////////
 #define F_CPU 16000000UL
 #include <avr/io.h>
 #include <avr/interrupt.h>
@@ -6,7 +14,9 @@
 #include <uart.h>
 #include <MPU9150.h>
 
-// Definitions
+/////////////////
+// Definitions //
+/////////////////
 #define PITCH_SERVO	D5
 #define PITCH_MIN	121
 #define PITCH_RANGE	175
@@ -22,10 +32,14 @@
 #define YAW_KP		1
 #define YAW_KI		0
 #define YAW_KD		0
+#define MAJVER		0
+#define MINVER		2
+#define DEBUG 		1
+#define DEBUG_PRINT(fmt, ...) do{ if(DEBUG) fprintf(stderr, "%s:%d: " fmt, __FILE__, __LINE__, ##__VA_ARGS__);}while(0)
 
-// Global Variables
-//struct dcm{
-//}
+//////////////////////
+// Global Variables //
+//////////////////////
 int enableStabilization = 0;
 int rollGoal = 0;
 int pitchGoal = 0;
@@ -37,128 +51,86 @@ volatile int lastPos = 0;
 volatile int yawOutput = 0;
 volatile int stupidYawCount = 0;
 int mode = 1;
+FILE uart_str = FDEV_SETUP_STREAM(uart_putchar, uart_getchar, _FDEV_SETUP_RW);
 
-// Function Prototypes
+/////////////////////////
+// Function Prototypes //
+/////////////////////////
 void setRoll(int angle);
 void setPitch(int angle);
 void setYaw(int angle);
 void bumpRoll(int angle);
 void bumpPitch(int angle);
 void bumpYaw(int angle);
+void setup();
 
-int main(int argc, char** argv){
+//////////////////////////
+// Function Definitions //
+//////////////////////////
+/**
+ * Setup function.  This function configures the Atmega328p hardware
+ */
+void setup(){
 	// setup
 	// Configure UART
 	uart_init();
-	FILE uart_str = FDEV_SETUP_STREAM(uart_putchar, uart_getchar, _FDEV_SETUP_RW);
-	stdout = stdin = &uart_str;
+	stderr = stdout = stdin = &uart_str;
+
+	// // Setup pins as outputs
+	// DDRD |= (1 << 5) | (1 << 3);
+	// DDRB |= (1 << 1) | (1 << 5);
+
+	// cli();	// disable interrupts
+
+	// // Configure Timer2
+	// TCCR2A = 0;
+	// TCCR2B = 5;	// Select 256 prescaler @ 31 kHz overflow
+	// TIMSK2 = 1 << 0 | 1 << 1 | 1 << 2;	// enable overflow interrupt and output compare
+
+	// // Configure Timer1
+	// TCCR1A = 0;
+	// TCCR1B = 3;	// Select no prescaler
+	// TIMSK1 |= 1 << 0 | 1 << 1 | 1 << 2;	// enable overflow interrupt
+	// OCR1B = 600;	// Set frequency
+
+	// // Configure Timer0
+	// TCCR0A |= (1 << WGM01);	// set CTC mode on Timer0
+	// TCCR0B |= (1 << CS00) | (1 << CS01);	// enable 0 prescaler
+	// OCR0A = 249;	// set controller frequency here!
+	// TIMSK0 |= (1 << OCIE0A);	// enable overflow interrupt on A
+
+	// sei(); // reenable interrupts
+
+	// // Configure servo initial locations
+	// OCR2B = (PITCH_MIN + PITCH_MAX) / 2;	// set mid pitch
+	// OCR2A = YAW_ZERO;
+	// OCR1A = (ROLL_MIN + ROLL_MAX) / 2;	// set mid roll
+	// MPU9150_init();
+}
+
+int main(int argc, char** argv){
+	setup();
+	printf("Arduino Gimbal Controller v%d.%d, compiled %s at %s\n", MAJVER, MINVER, __DATE__, __TIME__);
+
 	if(mode == 1){
 		printf("Welcome to stupid mode!\n");
 	}
 
-	// Setup pins as outputs
-	DDRD |= (1 << 5) | (1 << 3);
-	DDRB |= (1 << 1) | (1 << 5);
-
-	cli();	// disable interrupts
-
-	// Configure Timer2
-	TCCR2A = 0;
-	TCCR2B = 5;	// Select 256 prescaler @ 31 kHz overflow
-	TIMSK2 = 1 << 0 | 1 << 1 | 1 << 2;	// enable overflow interrupt and output compare
-
-	// Configure Timer1
-	TCCR1A = 0;
-	TCCR1B = 3;	// Select no prescaler
-	TIMSK1 |= 1 << 0 | 1 << 1 | 1 << 2;	// enable overflow interrupt
-	OCR1B = 600;	// Set frequency
-
-	// Configure Timer0
-	TCCR0A |= (1 << WGM01);	// set CTC mode on Timer0
-	TCCR0B |= (1 << CS00) | (1 << CS01);	// enable 0 prescaler
-	OCR0A = 249;	// set controller frequency here!
-	TIMSK0 |= (1 << OCIE0A);	// enable overflow interrupt on A
-
-	sei(); // reenable interrupts
-
-
-
-	// Configure servo initial locations
-	OCR2B = (PITCH_MIN + PITCH_MAX) / 2;	// set mid pitch
-	OCR2A = YAW_ZERO;
-	OCR1A = (ROLL_MIN + ROLL_MAX) / 2;	// set mid roll
-
 	// configure sensor
-	//	int curPitch = 0;
-	//	int curYaw = 0;
-	//	int curRoll = 0;
-	//	MPU9150_init();
-	//	MPU9150_Read();
-
-	// Calibrate sensor?
 
 	// Initialize DCM matrix
 
 	// configure controller
-	int cmd = 0;
-	char stupidCmd;
 
 	while(1){
 		// Get pos
 
 		// Set setpoint and process commands
-		if(UCSR0A & (1 << RXC0)){
-			switch(mode){
-				case 0:
-					scanf("%d", &cmd);
-					switch(cmd){
-						case 1:
-							scanf("%d %d %d", &rollGoal, &pitchGoal, &yawGoal);
-							printf("%c\n", (char) 0x06);
-							break;
-						case 2:
-							scanf("%d", enableStabilization);
-							enableStabilization = 0;
-							printf("%c\n", (char) 0x06);
-							break;
-						default:
-							printf("%c\n", (char) 0x15);
-							break;
-					}
-					break;
-				case 1:
-					scanf("%c", &stupidCmd);
-					switch(stupidCmd){
-						case 'q':
-							bumpRoll(-10);
-							break;
-						case 'e':
-							bumpRoll(10);
-							break;
-						case 'w':
-							bumpPitch(10);
-							break;
-						case 's':
-							bumpPitch(-10);
-							break;
-						case 'a':
-							bumpYaw(-1);
-							stupidYawCount = 250;
-							break;
-						case 'd':
-							bumpYaw(1);
-							stupidYawCount = 250;
-							break;
-						case 'm':
-							mode = 0;
-							printf("Mode 0 READY!\n");
-							break;
-					}
-					break;
-			}
-		}
+
 		// Calculate output
+
 		// Implement output
+
 	}
 }
 
