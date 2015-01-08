@@ -24,7 +24,7 @@
 void
 uart_init(void)
 {
-	UBRR0 = 34;
+	UBRR0 = 16;
 	UCSR0A |= (1 << 1);
 	UCSR0B = (1 << 4) | (1 << 3); /* tx/rx enable */
 }
