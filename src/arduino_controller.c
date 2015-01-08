@@ -112,10 +112,6 @@ int main(int argc, char** argv){
 	setup();
 	printf("Arduino Gimbal Controller v%d.%d, compiled %s at %s\n", MAJVER, MINVER, __DATE__, __TIME__);
 
-	if(mode == 1){
-		printf("Welcome to stupid mode!\n");
-	}
-
 	// configure sensor
 
 	// Initialize DCM matrix
