@@ -13,7 +13,7 @@ This software will take the orientations from both IMUs (one located in the sens
 
 This software directly requires the following libraries:
 
-* libzmq (0MQ)
+* I2C Master (http://homepage.hispeed.ch/peterfleury/avr-software.html)
 
 ## Topology
 
