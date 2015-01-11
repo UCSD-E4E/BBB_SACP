@@ -1,6 +1,3 @@
-#ifndef _MPU9150
-#define _MPU9150
-
 /////////////
 // Defines //
 /////////////
@@ -138,6 +135,7 @@
 #include <i2cmaster.h>
 #include <math.h>
 #include <stdio.h>
+#include <vmath.h>
 
 //////////////////////
 // Global Variables //
@@ -200,11 +198,7 @@ double cur_DCM[3][3];
 /////////////////////////
 // Function Prototypes //
 /////////////////////////
-double _vec_mag(double a[3]);
-void _vec_norm(double* a);
-double _dot(double a[3], double b[3]);
 void apply_bias(int* vec, int* bias, int* scale, int size, double* ret);
-void cross_product(double *a, double *b, double *ret);
 void force_normal(double *a, double *b);
 void make_coord_bases(double *x, double *y, double *z, int mode);
 void integrate_gyro(double *gyro, double dt);
@@ -265,36 +259,6 @@ void compose_rotations(double ret[][3], double rot1[][3], double rot2[][3]){
 			}
 		}
 	}
-}
-
-/**
- * Returns the yaw (z) axis Euler angle representation of the current
- * orientation
- *
- * @return Yaw Euler angle
- */
-double getYaw(){
-	return -atan2(cur_DCM[0][2], cur_DCM[1][2]);
-}
-
-/**
- * Returns the pitch (y) axis Euler angle representation of the current
- * orientation.
- *
- * @return Pitch Euler angle
- */
-double getPitch(){
-	return acos(cur_DCM[2][2]);
-}
-
-/**
- * Returns the roll (x) axis Euler angle representation of the current
- * orientation.
- *
- * @return roll Euler angle
- */
-double getRoll(){
-	return atan2(cur_DCM[2][0], cur_DCM[2][1]);
 }
 
 /**
@@ -373,8 +337,8 @@ void make_coord_bases(double *x, double *y, double *z, int mode){
 		default:
 			return;
 	}
-	cross_product(vec1, vec2, newVec);
-	_vec_norm(newVec);
+	vec3_cross_product(vec1, vec2, newVec);
+	vec3_norm(newVec);
 }
 
 /**
@@ -386,23 +350,9 @@ void make_coord_bases(double *x, double *y, double *z, int mode){
  */
 void force_normal(double *ref, double *vec){
 	double norm[3];
-	cross_product(ref, vec, norm);
-	cross_product(ref, norm, vec);
-	_vec_norm(vec);
-	return;
-}
-
-/**
- * Returns the cross product of vector a and vector b in the array ret.
- * Requires all parameters have three elements
- * @param a   First vector
- * @param b   Second vector
- * @param ret Array in which to store the cross product
- */
-void cross_product(double *a, double *b, double *ret){
-	ret[0] = a[1] * b[2] - a[2] * b[1];
-	ret[1] = a[2] * b[0] - a[0] * b[2];
-	ret[2] = a[0] * b[1] - a[1] * b[0];
+	vec3_cross_product(ref, vec, norm);
+	vec3_cross_product(ref, norm, vec);
+	vec3_norm(vec);
 	return;
 }
 
@@ -420,46 +370,6 @@ void apply_bias(int* vec, int* bias, int* scale,int size, double* ret){
 		ret[i] = ((double)vec[i] + bias[i]) / scale[i];
 	}
 	return;
-}
-
-/**
- * Calculates the magnitude of the vector.
- * @param  a A vector, whose magnitude will be calculated
- * @return   Magnitude of vector a
- */
-double _vec_mag(double *a){
-	return sqrt(a[0] * a[0] + a[1]* a[1] + a[2] * a[2]);
-}
-
-/**
- * Normalizes the supplied vector.  The vector supplied will be modified to
- * have a magnitude of 1.
- * @param  a Vector to be normalized.
- */
-void _vec_norm(double* a){
-	double __mag = _vec_mag(a);
-	if(fabs(__mag) < 0.001){
-		a[0] = __mag;
-		a[1] = __mag;
-		a[2] = __mag;
-		return;
-	}
-	a[0] /= __mag;
-	a[1] /= __mag;
-	a[2] /= __mag;
-	return;
-}
-
-/**
- * Returns the dot product of the two vectors supplied.  The dot product is
- * equal to the sum of the products of eacn analogous element.  Thus, the dot
- * product of vectors u and v is u_x * v_x + u_y * v_y + u_z * v_z.
- * @param  a First vector
- * @param  b Second vector
- * @return   Dot product of vectors a and b
- */
-double _dot(double *a, double *b){
-	return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 }
 
 /**
@@ -578,11 +488,11 @@ void update_DCM(double t){
 
 	// Get and scale acc
 	apply_bias(raw_acc, &(beta[0]), &(beta[3]), 3, scl_acc);
-	_vec_norm(scl_acc);
+	vec3_norm(scl_acc);
 
 	// get and scale mag
 	apply_bias(raw_mag, &(beta[12]), &(beta[15]), 3, scl_mag);
-	_vec_norm(scl_mag);
+	vec3_norm(scl_mag);
 
 	// Force normal
 	force_normal(scl_mag, scl_acc);
@@ -709,4 +619,3 @@ int MPU9150_Read(){
 	raw_mag[Z] = byte_H << 8 | byte_L;
 	return 0;
 }
-#endif //_MPU9150
