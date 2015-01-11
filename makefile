@@ -4,7 +4,7 @@
 
 AVR_GCC_OPTS = -Wall -Os -std=gnu99 -fdata-sections -ffunction-sections -mmcu=atmega328p -c
 GCC_OPTS = -Wall -Os -std=gnu99 -fdata-sections -ffunction-sections -c
-AVR_LD_OPTS = -Wl,-u,vfprintf,--gc-sections -lprintf_flt -lm -mmcu=atmega328p
+AVR_LD_OPTS = -Wl,-u,vfprintf,-u,vfscanf,--gc-sections -lprintf_flt -lscanf_flt -lm -mmcu=atmega328p
 LD_OPTS = -Wl,--gc-sections -lm
 ILIBS = -Ilibraries
 
