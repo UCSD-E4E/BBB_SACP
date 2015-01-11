@@ -7,6 +7,9 @@
 //////////////
 #include <stdio.h>
 #include <assert.h>
+#include <stdlib.h>
+#include <math.h>
+#include <time.h>
 
 /////////////
 // Defines //
@@ -36,8 +39,8 @@ void invert_matrix(double ret[][3], double mat[][3]);
  */
 void invert_matrix(double ret[][3], double mat[][3]){
 	double det =	mat[0][0] * (mat[1][1] * mat[2][2] - mat[2][1] * mat[1][2]) -
-					mat[0][1] * (mat[1][0] * mat[2][2] - mat[1][2] * mat[2][0]) +
-					mat[0][2] * (mat[1][0] * mat[2][1] - mat[1][1] * mat[2][0]);
+					mat[1][0] * (mat[0][1] * mat[2][2] - mat[2][1] * mat[0][2]) +
+					mat[2][0] * (mat[0][1] * mat[1][2] - mat[0][2] * mat[1][1]);
 	ret[0][0] = (mat[1][1] * mat[2][2] - mat[2][1] * mat[1][2]) / det;
 	ret[0][1] = (mat[0][2] * mat[2][1] - mat[0][1] * mat[2][2]) / det;
 	ret[0][2] = (mat[0][1] * mat[1][2] - mat[0][2] * mat[1][1]) / det;
@@ -71,37 +74,69 @@ int main(int argc, char** argv){
 	// Hardware configuration
 	printf("Arduino Gimbal Controller v%d.%d, compiled %s at %s\n", MAJVER, MINVER, __DATE__, __TIME__);
 
-	// Parse parse_DCM
-	int goodRead = 1;
-	do{
-		double parse_DCM[3][3] = {{0}};
-
-		int ret = 0;
-
-		ret = scanf("%f %f %f", &parse_DCM[0][0], &parse_DCM[0][1], &parse_DCM[0][2]);
-		if(ret != 3){
-			goodRead = 0;
-			continue;
+	double DCM[3][3];
+	double inv_DCM[3][3];
+	double res[3][3] = {{0}};
+	const double REF[3][3] =    {{1, 0, 0},
+								{0, 1, 0},
+								{0, 0, 1}};
+	srand (time(NULL));
+	for(int count = 0; count < 1000000; count++){
+		for(int i = 0; i < 3; i++){
+			for(int j = 0; j < 3; j++){
+				DCM[i][j] = (double)rand() / rand();
+				res[i][j] = 0;
+			}
 		}
-		ret = scanf("%f %f %f", &parse_DCM[1][0], &parse_DCM[1][1], &parse_DCM[1][2]);
-		if(ret != 3){
-			goodRead = 0;
-			continue;
+		invert_matrix(inv_DCM, DCM);
+		compose_rotations(res, DCM, inv_DCM);
+		for(int i = 0; i < 3; i++){
+			for(int j = 0; j < 3;j++){
+				if(fabs(res[i][j] - REF[i][j]) > 0.01){
+					printf("Failed on test %d\n", count);
+					for(int a = 0; a < 3; a++){
+						printf("%f\t%f\t%f\n", DCM[a][0], DCM[a][1], DCM[a][2]);
+					}
+					printf("\n");
+					for(int a = 0; a < 3; a++){
+						printf("%f\t%f\t%f\n", inv_DCM[a][0], inv_DCM[a][1], inv_DCM[a][2]);
+					}
+					printf("\n");
+					for(int a = 0; a < 3; a++){
+						printf("%f\t%f\t%f\n", res[a][0], res[a][1], res[a][2]);
+					}
+					printf("%d, %d: %f, %f => %f\n", i, j, res[i][j], REF[i][j], fabs(res[i][j] - REF[i][j]));
+					assert(0);
+				}
+			}
 		}
-		ret = scanf("%f %f %f", &parse_DCM[2][0], &parse_DCM[2][1], &parse_DCM[2][2]);
-		if(ret != 3){
-			goodRead = 0;
-			continue;
+		for(int i = 0; i < 3; i++){
+			for(int j = 0; j < 3; j++){
+				res[i][j] = 0;
+			}
 		}
-	} while(0);
-	if(goodRead){
-		// atomically pass parse_DCM to cur_DCM
+		compose_rotations(res, inv_DCM, DCM);
+		for(int i = 0; i < 3; i++){
+			for(int j = 0; j < 3;j++){
+				if(fabs(res[i][j] - REF[i][j]) > 0.01){
+					printf("Failed on test %d\n", count);
+					for(int a = 0; a < 3; a++){
+						printf("%f\t%f\t%f\n", DCM[a][0], DCM[a][1], DCM[a][2]);
+					}
+					printf("\n");
+					for(int a = 0; a < 3; a++){
+						printf("%f\t%f\t%f\n", inv_DCM[a][0], inv_DCM[a][1], inv_DCM[a][2]);
+					}
+					printf("\n");
+					for(int a = 0; a < 3; a++){
+						printf("%f\t%f\t%f\n", res[a][0], res[a][1], res[a][2]);
+					}
+					printf("%d, %d: %f, %f => %f\n", i, j, res[i][j], REF[i][j], fabs(res[i][j] - REF[i][j]));
+					assert(0);
+				}
+			}
+		}
 	}
-
-	printf("%3.3f\t%3.3f\t%3.3f\n", parse_DCM[0][0], parse_DCM[0][1], parse_DCM[0][2]);
-	printf("%3.3f\t%3.3f\t%3.3f\n", parse_DCM[1][0], parse_DCM[1][1], parse_DCM[1][2]);
-	printf("%3.3f\t%3.3f\t%3.3f\n", parse_DCM[2][0], parse_DCM[2][1], parse_DCM[2][2]);
-
 	return 0;
 
 }
