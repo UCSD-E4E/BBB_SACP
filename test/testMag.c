@@ -8,7 +8,13 @@
 #include <MPU9150.h>
 #include <uart.h>
 #include <i2cwrap.h>
+#include <i2cmaster.h>
 #include <stdio.h>
+#include <MPU9150_reg.h>
+
+ #define ADDR1	0x68
+#define ADDR2	0x0C
+
 
 // Global Variables
 FILE uart_str = FDEV_SETUP_STREAM(uart_putchar, uart_getchar, _FDEV_SETUP_RW);
@@ -104,6 +110,43 @@ int main(int argc, char** argv){
 	printf("done\n");
 	printf("Status: 0x%d\n", status);
 
+	printf("Getting sample data...");
+	// Activate measurement
+	twi_write(ADDR2, MPU9150_MAG_CNTL, 1);
+	int raw_mag[3];
+	uint8_t status1;
+	if(twi_read_byte(ADDR2, MPU9150_MAG_ST1, &status1)){
+		printf("Failed!\n");
+		die();
+	}
+	while(!(status1 & 1)){
+		if(twi_read_byte(ADDR2, MPU9150_MAG_ST1, &status1)){
+			printf("Failed!\n");
+			die();
+		}	
+	}
+	// raw_mag[X]
+	i2c_start_wait(ADDR2 << 1);	// SLA+W
+	i2c_write(MPU9150_MAG_HXL);	// write start reg
+	i2c_rep_start((ADDR2 << 1) + 1);
+	uint8_t byte_L = i2c_readAck();
+	uint8_t byte_H = i2c_readAck();
+	raw_mag[0] = byte_H << 8 | byte_L;
+
+	// raw_mag[Y]
+	byte_L = i2c_readAck();
+	byte_H = i2c_readAck();
+	raw_mag[1] = byte_H << 8 | byte_L;
+
+	// raw_mag[Z]
+	byte_L = i2c_readAck();
+	byte_H = i2c_readNak();
+	i2c_stop();
+	raw_mag[2] = byte_H << 8 | byte_L;
+	printf("done\n");
+
+	printf("Test result: %d\t%d\t%d\n", raw_mag[0], raw_mag[1], raw_mag[2]);
+
 	printf("Continuing read tests:");
 	int counter = 0;
 	while(1){
@@ -123,6 +166,27 @@ int main(int argc, char** argv){
 				goto broken;
 			}	
 		}
+
+		// raw_mag[X]
+		i2c_start_wait(ADDR2 << 1);	// SLA+W
+		i2c_write(MPU9150_MAG_HXL);	// write start reg
+		i2c_rep_start((ADDR2 << 1) + 1);
+		byte_L = i2c_readAck();
+		byte_H = i2c_readAck();
+		raw_mag[1] = (int)(byte_H << 8 | byte_L);
+
+		// raw_mag[Y]
+		byte_L = i2c_readAck();
+		byte_H = i2c_readAck();
+		raw_mag[0] = (int)(byte_H << 8 | byte_L);
+
+		// raw_mag[Z]
+		byte_L = i2c_readAck();
+		byte_H = i2c_readNak();
+		i2c_stop();
+		raw_mag[2] = -1 * (int)(byte_H << 8 | byte_L);
+
+		printf("%d\t%d\t%d\n", raw_mag[0], raw_mag[1], raw_mag[2]);
 		counter++;
 	}
 	broken:
