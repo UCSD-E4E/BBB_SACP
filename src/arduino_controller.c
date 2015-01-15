@@ -30,18 +30,18 @@
 #define ROLL_MIN	333
 #define ROLL_RANGE	60
 #define ROLL_MAX	425
-#define YAW_KP		1
-#define YAW_KI		0
-#define YAW_KD		0
 #define MAJVER		0
-#define MINVER		2
+#define MINVER		3
 #define DEBUG 		1
-#define DEBUG_PRINT(fmt, ...) do{ if(DEBUG) fprintf(stderr, "%s:%d: " fmt, __FILE__, __LINE__, ##__VA_ARGS__);}while(0)
+#define DEBUG_PRINT(fmt, ...) do{ if(DEBUG) fprintf(stderr, "%s:%d: " fmt, \
+		__FILE__, __LINE__, ##__VA_ARGS__);}while(0)
 
 //////////////////////
 // Global Variables //
 //////////////////////
-uint64_t time_ms = 0;
+volatile uint64_t time_ms = 0;
+uint64_t ctrl_update = 0;
+uint64_t uart_update = 0;
 int enableStabilization = 0;
 volatile int error = 0;
 volatile int curSpeed = 0;
@@ -63,7 +63,7 @@ void bumpYaw(int angle);
 void setup();
 int get_DCM_UART(double DCM[3][3]);
 void invert_matrix(double ret[][3], double mat[][3]);
-void compose_rotations(double ret[][3], double rot1[][3], double rot2[][3]);
+void _compose_rotations(double ret[][3], double rot1[][3], double rot2[][3]);
 double DCM_to_Roll(double DCM[3][3]);
 double DCM_to_Pitch(double DCM[3][3]);
 double DCM_to_Yaw(double DCM[3][3]);
@@ -103,14 +103,14 @@ double DCM_to_Roll(double DCM[3][3]){
 }
 
 /**
- * Composes the rotation rot2 onto rot1, i.e. apply rot1 first, then apply rot2.
+ * Composes the rotation rot2 onto rot1, i.e. apply rot1, then apply rot2.
  * ret must be initialized to zero prior to calling this function.
  *
  * @param ret	Pointer to the array to populate with the new rotation matrix
  * @param ret1	Pointer to the array representing matrix 1 in row col notation
  * @param ret2	Pointer to the array representing matrix 2 in row col notation
  */
-void compose_rotations(double ret[][3], double rot1[][3], double rot2[][3]){
+void _compose_rotations(double ret[][3], double rot1[][3], double rot2[][3]){
 	for(int row = 0; row < 3; row++){
 		for(int col = 0; col < 3; col++){
 			for(int i = 0; i < 3; i++){
@@ -127,9 +127,9 @@ void compose_rotations(double ret[][3], double rot1[][3], double rot2[][3]){
  * @param mat	Pointer to the array containing the given matrix
  */
 void invert_matrix(double ret[][3], double mat[][3]){
-	double det =	mat[0][0] * (mat[1][1] * mat[2][2] - mat[2][1] * mat[1][2]) -
-					mat[1][0] * (mat[0][1] * mat[2][2] - mat[2][1] * mat[0][2]) +
-					mat[2][0] * (mat[0][1] * mat[1][2] - mat[0][2] * mat[1][1]);
+	double det = mat[0][0] * (mat[1][1] * mat[2][2] - mat[2][1] * mat[1][2]) -
+				 mat[1][0] * (mat[0][1] * mat[2][2] - mat[2][1] * mat[0][2]) +
+				 mat[2][0] * (mat[0][1] * mat[1][2] - mat[0][2] * mat[1][1]);
 	ret[0][0] = (mat[1][1] * mat[2][2] - mat[2][1] * mat[1][2]) / det;
 	ret[0][1] = (mat[0][2] * mat[2][1] - mat[0][1] * mat[2][2]) / det;
 	ret[0][2] = (mat[0][1] * mat[1][2] - mat[0][2] * mat[1][1]) / det;
@@ -174,6 +174,7 @@ int get_DCM_UART(double DCM[3][3]){
 			return 2;
 		}
 	}
+	return 0;
 }
 
 /**
@@ -181,6 +182,10 @@ int get_DCM_UART(double DCM[3][3]){
  *
  * Initializes the following:
  * 	UART at 57600 baud with 8N1 frame
+ * 	Arduino Pin 3, 5, 6, and 13 as high Z (output)
+ * 	Timer 0, 1, 2 for PWM generation and 1 ms timer
+ * 	MPU9150 to a ready state
+ * 	Servos to mid-range
  * 	
  */
 void setup(){
@@ -189,22 +194,17 @@ void setup(){
 	uart_init();
 	stderr = stdout = stdin = &uart_str;
 
-	// Flush UART buffer
-	uint8_t dummy;
-	while (UCSR0A & (1 << RXC0)){
-		dummy = UDR0;
-	}
-
 	// Setup pins as outputs
-	DDRD |= (1 << 5) | (1 << 3);
-	DDRB |= (1 << 1) | (1 << 5);	// Pin 9 and LED (Pin 13)
+	DDRD |= (1 << 5) | (1 << 3) | (1 << 6);	// Pitch (Pin 5) and Yaw (Pin 3)
+			// and Roll (Pin 6)
+	DDRB |= (1 << 5);	// LED (Pin 13)
 
 	cli();	// disable interrupts
 
 	// Configure Timer2
 	TCCR2A = 0;
 	TCCR2B = 5;	// Select 256 prescaler @ 31 kHz overflow
-	TIMSK2 = 1 << 0 | 1 << 1 | 1 << 2;	// enable overflow interrupt and output compare
+	TIMSK2 = 1 << 0 | 1 << 1 | 1 << 2;	// overflow interrupt & output compare
 
 	// Configure Timer1
 	TCCR1A = 0;
@@ -227,11 +227,13 @@ void setup(){
 
 	// Initialize MPU9150
 	MPU9150_init();
+
 }
 
 int main(int argc, char** argv){
 	setup();
-	printf("Arduino Gimbal Controller v%d.%d, compiled %s at %s\n", MAJVER, MINVER, __DATE__, __TIME__);
+	printf("Arduino Gimbal Controller v%d.%d, compiled %s at %s\n", MAJVER, 
+			MINVER, __DATE__, __TIME__);
 
 	// Initialize DCM matrices
 	double DCM_goal[3][3];
@@ -242,7 +244,7 @@ int main(int argc, char** argv){
 	double pitchGoal = 0;
 	double yawGoal = 0;
 
-	double y_p = .5;
+	double y_p = 1;
 	double y_d = 0;
 	double y_i = 0;
 	double y_int = 0;
@@ -251,17 +253,17 @@ int main(int argc, char** argv){
 
 	// configure controller
 	while(1){
-		if((time_ms % 10) == 0){
+		if(time_ms >= uart_update){
+			uart_update = time_ms + 100;
 			// get UART DCM
-			if(!get_DCM_UART(DCM_goal)){
-				// get MPU9150 DCM
-				get_DCM(DCM_base);
+			int result = get_DCM_UART(DCM_goal);
+			if(result == 0){
 
 				// Invert MPU9150 DCM
 				invert_matrix(DCM_binv, DCM_base);
 
 				// Calculate the gimbal rotation
-				compose_rotations(DCM_gimb, DCM_binv, DCM_goal);
+				_compose_rotations(DCM_gimb, DCM_binv, DCM_goal);
 
 				// Extract RP, store in goal
 				rollGoal = DCM_to_Roll(DCM_gimb);
@@ -272,13 +274,22 @@ int main(int argc, char** argv){
 			}
 		}
 
-		if((time_ms % 2) == 0){
+		if(time_ms >= ctrl_update){
+			// update time
+			ctrl_update = time_ms + 10;
+
+			// Update DCM
+			PORTB ^= (1 << 5);
+			update_DCM(0.01);
+			// get MPU9150 DCM
+			get_DCM(DCM_base);
+
 			// setRoll
-			OCR1A = (int)(angle *180 / M_PI / ROLL_RANGE * (ROLL_MAX - 
+			OCR1A = (int)(rollGoal *180 / M_PI / ROLL_RANGE * (ROLL_MAX - 
 					ROLL_MIN) / 2 + (ROLL_MIN + ROLL_MAX) / 2);
 
 			// setPitch
-			OCR2B = (int)(angle * 180 / M_PI / PITCH_RANGE * (PITCH_MAX - 
+			OCR2B = (int)(pitchGoal * 180 / M_PI / PITCH_RANGE * (PITCH_MAX - 
 					PITCH_MIN) / 2 + (PITCH_MIN + PITCH_MAX) / 2);
 
 			// YAW PID calc
@@ -325,6 +336,6 @@ ISR(TIMER1_COMPB_vect){
 }
 
 ISR(TIMER0_COMPA_vect){
-	PORTB ^= (1 << 5);
+	// 1 ms counter
 	time_ms++;
 }
