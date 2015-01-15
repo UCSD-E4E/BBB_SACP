@@ -16,9 +16,12 @@ clean:
 	rm -r ./objdir
 	mkdir objdir
 
-build/testMPU9150.out: test/testMPU9150.c libraries/MPU9150.h libraries/uart.h libraries/i2cwrap.h libraries/MPU9150.c libraries/i2cmaster.h libraries/uart.c libraries/i2cwrap.c libraries/twimaster.c libraries/vmath.h libraries/vmath.c
-	avr-gcc -mmcu=atmega328p ./test/testMPU9150.c ./libraries/MPU9150.c ./libraries/uart.c ./libraries/i2cwrap.c ./libraries/twimaster.c -Ilibraries -o ./build/testMPU9150.out -Wall -Os -std=gnu99 -Wl,-u,vfprintf -lprintf_flt -lm
+build/testMPU9150.out: objdir/testMPU9150.o objdir/MPU9150.o objdir/uart.o objdir/i2cwrap.o objdir/i2cmaster.o objdir/vmath.o
+	avr-gcc ./objdir/testMPU9150.o ./objdir/uart.o ./objdir/i2cwrap.o ./objdir/i2cmaster.o ./objdir/vmath.o ./objdir/MPU9150.o -o ./build/testMPU9150.out $(AVR_LD_OPTS)
 	cp ./build/testMPU9150.out ./build/linkobj.out
+
+objdir/testMPU9150.o: test/testMPU9150.c libraries/MPU9150.h libraries/uart.h libraries/i2cwrap.h libraries/i2cmaster.h libraries/MPU9150_reg.h
+	avr-gcc ./test/testMPU9150.c -o objdir/testMPU9150.o $(ILIBS) $(AVR_GCC_OPTS)
 
 build/testAVR.out: objdir/testAVR.o
 	avr-gcc ./objdir/testAVR.o -o ./build/testAVR.out $(AVR_LD_OPTS)
@@ -34,7 +37,7 @@ build/testAVRUART.out: objdir/testAVRUART.o objdir/uart.o
 	avr-gcc objdir/testAVRUART.o objdir/uart.o -o build/testAVRUART.out $(AVR_LD_OPTS)
 	cp ./build/testAVRUART.out ./build/linkobj.out
 
-build/arduino_controller.out: objdir/arduino_controller.o objdir/uart.o objdir/MPU9150.o objdir/i2cwrap.o objdir/i2cmaster.o
+build/arduino_controller.out: objdir/arduino_controller.o objdir/uart.o objdir/MPU9150.o objdir/i2cwrap.o objdir/i2cmaster.o objdir/vmath.o
 	avr-gcc ./objdir/arduino_controller.o ./objdir/uart.o ./objdir/MPU9150.o ./objdir/i2cwrap.o ./objdir/i2cmaster.o ./objdir/vmath.o -o ./build/arduino_controller.out $(AVR_LD_OPTS)
 	cp ./build/arduino_controller.out ./build/linkobj.out
 
@@ -54,9 +57,12 @@ build/testI2C.out: test/testI2C.c libraries/uart.h libraries/i2cmaster.h
 	cp ./build/testI2C.out ./build/linkobj.out
 
 
-build/testMag.out: test/testMag.c libraries/MPU9150.h libraries/uart.h libraries/i2cwrap.h libraries/i2cmaster.h
-	avr-gcc -mmcu=atmega328p ./test/testMag.c ./libraries/uart.c ./libraries/i2cwrap.c ./libraries/twimaster.c $(AVR_GCC_OPTS) $(ILIBS) -o ./build/testMag.out
+build/testMag.out: objdir/testMag.o objdir/MPU9150.o objdir/uart.o objdir/i2cwrap.o objdir/i2cmaster.o
+	avr-gcc ./objdir/testMag.o ./objdir/uart.o ./objdir/i2cwrap.o ./objdir/i2cmaster.o $(AVR_LD_OPTS) -o ./build/testMag.out
 	cp ./build/testMag.out ./build/linkobj.out
+
+objdir/testMag.o: test/testMag.c libraries/MPU9150.h libraries/uart.h libraries/i2cwrap.h libraries/i2cmaster.h
+	avr-gcc ./test/testMag.c -o ./objdir/testMag.o $(AVR_GCC_OPTS) $(ILIBS)
 
 objdir/MPU9150.o: libraries/MPU9150.c libraries/MPU9150.h libraries/i2cwrap.h libraries/i2cmaster.h libraries/vmath.h
 	avr-gcc ./libraries/MPU9150.c -o ./objdir/MPU9150.o $(AVR_GCC_OPTS) $(ILIBS)
@@ -79,7 +85,7 @@ build/hexfile.hex: build/linkobj.out
 program: build/hexfile.hex
 	avrdude -c arduino -p m328p -P /dev/ttyACM0 -U flash:w:./build/hexfile.hex:i
 
-build/testAlg.out: test/testAlg.c libraries/vmath.c libraries/vmath.h
+build/testAlg.out: ./build/linkobj.out test/testAlg.c libraries/vmath.c libraries/vmath.h
 	gcc ./test/testAlg.c -o objdir/testAlg.o $(ILIBS) $(GCC_OPTS)
 	gcc ./libraries/vmath.c -o objdir/vmath.o $(ILIBS) $(GCC_OPTS)
 	gcc ./objdir/testAlg.o ./objdir/vmath.o -o build/testAlg.out $(LD_OPTS)
