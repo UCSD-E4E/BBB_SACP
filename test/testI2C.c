@@ -12,7 +12,7 @@ int main(int argc, char** argv){
 	stdout = stdin = &uart_str;
 
 	i2c_init();
-	i2c_start_wait(0x68 << 1 + I2C_WRITE);
+	i2c_start_wait((0x68 << 1) + I2C_WRITE);
 	printf("Beginning...");
 	i2c_write((uint8_t)'k');
 	i2c_write((uint8_t)'n');
