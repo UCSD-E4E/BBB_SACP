@@ -16,6 +16,13 @@ clean:
 	rm -r ./objdir
 	mkdir objdir
 
+build/calibMag.out: objdir/calibMag.o objdir/MPU9150.o objdir/uart.o objdir/i2cwrap.o objdir/i2cmaster.o
+	avr-gcc -o build/calibMag.out objdir/calibMag.o objdir/MPU9150.o objdir/uart.o objdir/i2cwrap.o objdir/i2cmaster.o $(AVR_LD_OPTS)
+	cp build/calibMag.out build/linkobj.out
+
+objdir/calibMag.o: test/calibMag.c libraries/MPU9150.h libraries/uart.h libraries/i2cwrap.h libraries/MPU9150_reg.h libraries/i2cmaster.h
+	avr-gcc ./test/calibMag.c -o objdir/calibMag.o $(ILIBS) $(AVR_GCC_OPTS)
+
 build/testMPU9150.out: objdir/testMPU9150.o objdir/MPU9150.o objdir/uart.o objdir/i2cwrap.o objdir/i2cmaster.o objdir/vmath.o
 	avr-gcc ./objdir/testMPU9150.o ./objdir/uart.o ./objdir/i2cwrap.o ./objdir/i2cmaster.o ./objdir/vmath.o ./objdir/MPU9150.o -o ./build/testMPU9150.out $(AVR_LD_OPTS)
 	cp ./build/testMPU9150.out ./build/linkobj.out
