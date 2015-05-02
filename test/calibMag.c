@@ -18,13 +18,15 @@
 #include <i2cwrap.h>
 #include <i2cmaster.h>
 #include <MPU9150_reg.h>
+#define F_CPU 16000000
+#include <util/delay.h>
 
 /////////////
 // Defines //
 /////////////
 #define ADDR1	0x68
 #define ADDR2	0x0C
-#define numReads	10000
+#define NUM_READS	2000
 
 //////////////////////
 // Global Variables //
@@ -74,7 +76,9 @@ int main(int argc, char** argv){
 	///////////////////
 	// Main sequence //
 	///////////////////
-	for(int i = 0; i < numReads; i++){
+	_delay_ms(1000);
+	for(int i = 0; i < NUM_READS; i++){
+		_delay_ms(10);
 		if(twi_write(ADDR2, MPU9150_MAG_CNTL, 1)){
 			printf("Start read failed!\n");
 			die();
@@ -105,6 +109,6 @@ int main(int argc, char** argv){
 		byte_H = i2c_readNak();
 		i2c_stop();
 		raw_mag[2] = byte_H << 8 | byte_L;
-		printf("%d\t%d\t%d\n", raw_mag[0], raw_mag[1], raw_mag[2]);	
+		printf("%d,%d,%d\n", raw_mag[0], raw_mag[1], raw_mag[2]);	
 	}
 }
