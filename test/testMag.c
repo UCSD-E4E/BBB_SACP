@@ -11,13 +11,19 @@
 #include <i2cmaster.h>
 #include <stdio.h>
 #include <MPU9150_reg.h>
+#include <math.h>
 
- #define ADDR1	0x68
+
+#define ADDR1	0x68
 #define ADDR2	0x0C
 
 
 // Global Variables
 FILE uart_str = FDEV_SETUP_STREAM(uart_putchar, uart_getchar, _FDEV_SETUP_RW);
+const double MAG_MAT[3][3] = {{0.0071, 	0.0002, 	0.0003},
+							  {0, 		0.0070, 	-0.003},
+							  {0, 		0, 			0.0072}};
+const double MAG_VEC[3] = {-20.9245, 36.9164, 81.9928};
 
 // Function Prototypes
 void die(void);
@@ -145,10 +151,23 @@ int main(int argc, char** argv){
 	raw_mag[2] = byte_H << 8 | byte_L;
 	printf("done\n");
 
-	printf("Test result: %d\t%d\t%d\n", raw_mag[0], raw_mag[1], raw_mag[2]);
+	// Apply calibration
+	double calibData1[3] = {0};
+	double calibData2[3] = {0};
+	for(int i = 0; i < 3; i++){
+		calibData1[i] = raw_mag[i] - MAG_VEC[i];
+	}
+	for(int i = 0; i < 3; i++){
+		for(int j = 0; j < 3; j++){
+			calibData2[i] += calibData1[j] * MAG_MAT[i][j];
+		}
+	}
+
+	printf("Test result: %f\t%f\t%f\n", calibData2[0], calibData2[1], calibData2[2]);
 
 	printf("Continuing read tests:");
 	int counter = 0;
+	double mag;
 	while(1){
 		if(twi_write(ADDR2, MPU9150_MAG_CNTL, 1)){
 			printf("Failed!\n");
@@ -173,20 +192,32 @@ int main(int argc, char** argv){
 		i2c_rep_start((ADDR2 << 1) + 1);
 		byte_L = i2c_readAck();
 		byte_H = i2c_readAck();
-		raw_mag[1] = (int)(byte_H << 8 | byte_L);
+		raw_mag[0] = (int)(byte_H << 8 | byte_L);
 
 		// raw_mag[Y]
 		byte_L = i2c_readAck();
 		byte_H = i2c_readAck();
-		raw_mag[0] = (int)(byte_H << 8 | byte_L);
+		raw_mag[1] = (int)(byte_H << 8 | byte_L);
 
 		// raw_mag[Z]
 		byte_L = i2c_readAck();
 		byte_H = i2c_readNak();
 		i2c_stop();
-		raw_mag[2] = -1 * (int)(byte_H << 8 | byte_L);
+		raw_mag[2] = (int)(byte_H << 8 | byte_L);
 
-		printf("%d\t%d\t%d\n", raw_mag[0], raw_mag[1], raw_mag[2]);
+		for(int i = 0; i < 3; i++){
+			calibData1[i] = raw_mag[i] - MAG_VEC[i];
+		}
+		mag = 0;
+		for(int i = 0; i < 3; i++){
+			calibData2[i] = 0;
+			for(int j = 0; j < 3; j++){
+				calibData2[i] += calibData1[j] * MAG_MAT[i][j];
+			}
+			mag += calibData2[i] * calibData2[i];
+		}
+
+		printf("Test result: %f\t%f\t%f\t%f\n", calibData2[1], calibData2[0], calibData2[2], sqrt(mag));
 		counter++;
 	}
 	broken:
